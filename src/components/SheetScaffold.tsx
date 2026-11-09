@@ -88,7 +88,7 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
                     icon={journalOpen ? openBookIcon : bookIcon}
                     label="Open journal"
                     active={journalOpen || active === 'journal'}
-                    onPress={() => router.push('/journal' as never)}
+                    onPress={() => (journalOpen ? router.replace('/' as never) : router.push('/journal' as never))}
                   />
                   {journalSection !== undefined ? (
                     <View style={styles.sectionStack} accessibilityRole="tablist">
