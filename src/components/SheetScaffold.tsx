@@ -66,7 +66,7 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
         <ImageBackground source={paper} resizeMode="cover" style={styles.paper}>
           <SafeAreaView edges={['top']} style={styles.safe}>
             <GoldHeader showBack={!isHome} onBack={goBack} onEdit={onEdit} />
-            <AbilityStrip onPress={() => router.push('/skills' as never)} />
+            <AbilityStrip onPress={() => router.push('/abilities' as never)} />
 
             <View style={styles.body}>
               <ScrollView

@@ -27,6 +27,14 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen
+          name="abilities"
+          options={{
+            presentation: 'transparentModal',
+            animation: 'fade',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
+        <Stack.Screen
           name="dice"
           options={{
             presentation: 'transparentModal',

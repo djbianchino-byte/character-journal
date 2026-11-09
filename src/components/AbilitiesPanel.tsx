@@ -1,13 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { PaperCard } from '../components/PaperCard';
-import { SheetScaffold } from '../components/SheetScaffold';
 import { character } from '../data/character';
 import { colors, fonts } from '../theme';
+import { PaperCard } from './PaperCard';
 
-export default function SkillsScreen() {
+/** Saving throws, senses and skills. Shown in the drop-down opened from the ability strip. */
+export function AbilitiesPanel() {
   return (
-    <SheetScaffold>
+    <>
       <PaperCard label="Saving throw proficiencies">
         <View style={styles.savesRow}>
           {character.savingThrows.map((save, index) => (
@@ -61,7 +61,7 @@ export default function SkillsScreen() {
 
         <Text style={styles.legend}>◆ proficient · ◇ untrained</Text>
       </PaperCard>
-    </SheetScaffold>
+    </>
   );
 }
 
