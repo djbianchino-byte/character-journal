@@ -1,101 +1,101 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { CampaignLocation } from '../data/campaign';
-import { colors, fonts } from '../theme';
+import { colors, fonts, paperShadow, radius } from '../theme';
 
 type Props = {
   location: CampaignLocation;
-  onPress?: () => void;
+  onPress: () => void;
 };
 
-/** Location card: name, region, summary and chevron — used pinned and in lists. */
+/** Location entry in the journal's Places tab. */
 export function LocationCard({ location, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${location.name}, ${location.region}. ${location.summary}`}
+      accessibilityLabel={`${location.name}, ${location.region}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      <View style={styles.top}>
-        <View style={[styles.avatar, { backgroundColor: location.tint }]}>
-          <Text style={styles.initial}>{location.initial}</Text>
-        </View>
-        <View style={styles.body}>
-          <Text style={styles.name} numberOfLines={1}>
-            {location.name}
-          </Text>
-          <Text style={styles.region} numberOfLines={1}>
-            {location.region}
-          </Text>
-        </View>
-        <Text style={styles.chevron}>›</Text>
+      <View style={[styles.medallion, { backgroundColor: location.tint }]}>
+        <Text style={styles.initial}>{location.initial}</Text>
       </View>
 
-      <Text style={styles.summary}>{location.summary}</Text>
+      <View style={styles.body}>
+        <Text style={styles.name}>{location.name}</Text>
+        <Text style={styles.region}>{location.region}</Text>
+        <Text style={styles.summary} numberOfLines={3}>
+          {location.summary}
+        </Text>
+      </View>
+
+      <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    gap: 10,
-    padding: 14,
-    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 11,
+    padding: 12,
+    marginBottom: 10,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.card,
-    shadowColor: colors.shadow,
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    borderRadius: radius.card,
+    ...paperShadow,
   },
   pressed: {
-    opacity: 0.88,
+    opacity: 0.75,
   },
-  top: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  medallion: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(61, 32, 0, 0.25)',
   },
   initial: {
     fontFamily: fonts.display,
-    fontSize: 19,
-    color: colors.textInverse,
+    fontSize: 20,
+    lineHeight: 22,
+    color: colors.cream,
   },
   body: {
     flex: 1,
   },
   name: {
-    fontFamily: fonts.body,
-    fontSize: 16.5,
-    color: colors.textPrimary,
+    fontFamily: fonts.display,
+    fontSize: 20,
+    lineHeight: 22,
+    color: colors.ink,
   },
   region: {
     fontFamily: fonts.body,
-    fontSize: 12.5,
-    color: colors.textMuted,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+    color: colors.muted,
     marginTop: 1,
-  },
-  chevron: {
-    fontSize: 24,
-    lineHeight: 26,
-    color: colors.textMuted,
   },
   summary: {
     fontFamily: fonts.body,
     fontSize: 13,
-    lineHeight: 19,
-    color: colors.textPrimary,
+    lineHeight: 18,
+    color: colors.inkSoft,
+    marginTop: 5,
+  },
+  chevron: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 24,
+    color: colors.ink,
+    opacity: 0.6,
+    marginTop: 8,
   },
 });

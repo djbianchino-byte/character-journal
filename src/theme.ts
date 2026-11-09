@@ -1,58 +1,69 @@
 import { Platform } from 'react-native';
 
 /**
- * Design tokens derived from the "Character Journal • Foundations" frame
- * in the Figma file (parchment theme).
+ * Design tokens taken from the "Finalized screens" page in the Figma file.
  *
- *   text/primary        #3D2000
- *   text/inverse        #FFFCF6
- *   surface/header-gold #D7BD57
- *   artwork/gold-400    #D7A659
- *   artwork/parchment   #EAD6BB
- *   border/default      #3D2000
+ *   ink               #3D2000
+ *   ink on gold       #FFFCF6
+ *   header gold       #D7BD57
+ *   parchment         #EAD6BB
+ *   card              rgba(255,252,246,0.55)
+ *   muted             #796344
+ *   roll green        #30432A
  *
- * Fonts are approximated with platform serif faces so the prototype runs
- * without shipping the commercial "Kingthings Petrock" / "Lingo" fonts.
+ * The display face is IM Fell English (bundled in assets/fonts), a free
+ * old-style serif that stands in for Kingthings Petrock. Body copy uses the
+ * platform UI sans, standing in for Lingo.
  */
 export const colors = {
-  textPrimary: '#3d2000',
-  textInverse: '#fffcf6',
-  textMuted: '#6f512b',
-  textFaint: '#8b6f47',
+  ink: '#3d2000',
+  inkSoft: '#6b4a24',
+  muted: '#796344',
 
-  headerGold: '#d7bd57',
-  gold400: '#d7a659',
-  gold: '#b8892c',
-  parchment200: '#ead6bb',
+  cream: '#fffcf6',
+  gold: '#d7bd57',
+  goldDark: '#b8892c',
+  goldLight: '#e9d39b',
 
-  parchmentBg: '#f7ecd3',
-  parchmentDeep: '#efdfbf',
-  parchmentEdge: '#e0c99e',
+  parchment: '#ead6bb',
+  parchmentLight: '#f4e8d2',
+  parchmentDeep: '#e3cbab',
 
-  card: '#fffdf7',
-  cardAlt: '#fff8ea',
-  white: '#ffffff',
+  card: 'rgba(255, 252, 246, 0.55)',
+  cardSolid: '#f9efdc',
+  cardDeep: 'rgba(234, 214, 187, 0.72)',
 
   border: '#3d2000',
-  borderSoft: '#c8b184',
+  borderSoft: 'rgba(61, 32, 0, 0.3)',
 
+  green: '#30432a',
+  greenLight: '#5c7a3a',
   hp: '#7d1d1d',
-  hpDark: '#5a1414',
-  hpTrack: '#e6cdb2',
-  green: '#5c7a3a',
+  hpTrack: '#d9bda0',
 
+  white: '#ffffff',
+  backdrop: '#1d1710',
+  scrim: 'rgba(24, 14, 4, 0.55)',
   shadow: '#2b1a08',
-  scrim: 'rgba(41, 19, 9, 0.35)',
-  goldScrim: 'rgba(215, 189, 87, 0.22)',
 } as const;
 
 export const fonts = {
-  // Medieval display face (Kingthings Petrock stand-in)
-  display: Platform.select({ ios: 'Palatino', android: 'serif', default: 'serif' }),
-  // Narrative body (Lingo stand-in)
-  body: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
-  // Numeric / data face
-  data: Platform.select({ ios: 'Courier', android: 'monospace', default: 'monospace' }),
+  display: 'IM Fell English',
+  displayItalic: 'IM Fell English Italic',
+  /** Lining numerals for scores, coins, hit points and dice labels. */
+  numeral: 'MedievalSharp',
+  body: Platform.select({
+    ios: 'Avenir Next',
+    android: 'sans-serif',
+    web: 'system-ui',
+    default: 'sans-serif',
+  }),
+  data: Platform.select({
+    ios: 'Avenir Next',
+    android: 'sans-serif',
+    web: 'system-ui',
+    default: 'sans-serif',
+  }),
 } as const;
 
 export const spacing = {
@@ -65,19 +76,21 @@ export const spacing = {
 } as const;
 
 export const radius = {
+  card: 4,
   sm: 6,
   md: 10,
-  lg: 16,
+  sheet: 28,
   pill: 999,
 } as const;
 
-export const cardShadow = {
-  shadowColor: colors.shadow,
-  shadowOpacity: 0.16,
-  shadowRadius: 10,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 3,
-} as const;
-
 export const HEADER_HEIGHT = 178;
-export const TAB_BAR_HEIGHT = 62;
+export const ABILITY_HEIGHT = 75;
+export const SHEET_WIDTH = 390;
+
+export const paperShadow = {
+  shadowColor: colors.shadow,
+  shadowOpacity: 0.14,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 1,
+} as const;

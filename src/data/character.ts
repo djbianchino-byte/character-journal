@@ -81,7 +81,7 @@ export const character: Character = {
     { key: 'CHA', label: 'Charisma', mod: '+0', score: 10 },
   ],
 
-  armorClass: 25,
+  armorClass: 18,
   initiative: '+3',
   hp: { current: 30, max: 30, temp: 0 },
 
