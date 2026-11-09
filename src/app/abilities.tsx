@@ -1,21 +1,35 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Animated,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AbilitiesPanel } from '../components/AbilitiesPanel';
-import { colors, fonts, radius } from '../theme';
+import { ABILITY_HEIGHT, colors, fonts, HEADER_HEIGHT, radius, SHEET_WIDTH } from '../theme';
 
 export default function AbilitiesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [progress] = useState(() => new Animated.Value(0));
+
+  const framed = Platform.OS === 'web' && width >= 560;
+  const sheetHeight = framed ? Math.min(844, height - 48) : height;
+  const sheetTop = framed ? (height - sheetHeight) / 2 : 0;
+  const anchor = sheetTop + (framed ? 0 : insets.top) + HEADER_HEIGHT + ABILITY_HEIGHT;
 
   useEffect(() => {
     Animated.timing(progress, {
       toValue: 1,
-      duration: 220,
+      duration: 240,
       useNativeDriver: true,
     }).start();
   }, [progress]);
@@ -29,9 +43,9 @@ export default function AbilitiesScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} pointerEvents="box-none">
       <Pressable
-        style={StyleSheet.absoluteFill}
+        style={[styles.scrim, { top: anchor }]}
         onPress={close}
         accessibilityRole="button"
         accessibilityLabel="Close abilities and skills"
@@ -40,21 +54,24 @@ export default function AbilitiesScreen() {
       <Animated.View
         style={[
           styles.drop,
+          framed
+            ? { left: (width - SHEET_WIDTH) / 2, width: SHEET_WIDTH, paddingHorizontal: 0 }
+            : { left: 12, right: 12 },
           {
-            paddingTop: insets.top + 8,
+            top: anchor,
             opacity: progress,
             transform: [
               {
                 translateY: progress.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [-60, 0],
+                  outputRange: [-18, 0],
                 }),
               },
             ],
           },
         ]}
       >
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, framed && styles.sheetFramed]}>
           <View style={styles.head}>
             <View>
               <Text style={styles.kicker}>Ser Garyth</Text>
@@ -72,7 +89,7 @@ export default function AbilitiesScreen() {
           </View>
 
           <ScrollView
-            style={{ maxHeight: height * 0.72 }}
+            style={{ maxHeight: sheetHeight - anchor - 40 }}
             contentContainerStyle={styles.body}
             showsVerticalScrollIndicator={false}
           >
@@ -86,28 +103,41 @@ export default function AbilitiesScreen() {
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  scrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: colors.scrim,
   },
   drop: {
-    width: '100%',
-    maxWidth: 390,
-    alignSelf: 'center',
-    paddingHorizontal: 12,
+    position: 'absolute',
   },
   sheet: {
     backgroundColor: colors.parchmentLight,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.card,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: radius.card,
+    borderBottomRightRadius: radius.card,
     paddingHorizontal: 14,
-    paddingTop: 12,
+    paddingTop: 10,
     paddingBottom: 14,
     shadowColor: '#000000',
     shadowOpacity: 0.45,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 10 },
     elevation: 8,
+  },
+  sheetFramed: {
+    borderRadius: radius.card,
+    borderTopWidth: 1,
   },
   head: {
     flexDirection: 'row',
