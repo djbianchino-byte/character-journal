@@ -1,16 +1,21 @@
 import { useRouter } from 'expo-router';
 import { Alert, StyleSheet, View } from 'react-native';
 
-import { AbilityScores } from '../components/AbilityScores';
-import { CharacterHeader } from '../components/CharacterHeader';
-import { SavingThrowsSensesCard } from '../components/SavingThrowsSensesCard';
-import { ScreenScaffold } from '../components/ScreenScaffold';
-import { SkillsTable } from '../components/SkillsTable';
-import { character } from '../data/character';
+import { AbilityScores } from '../../components/AbilityScores';
+import { CharacterHeader } from '../../components/CharacterHeader';
+import { SavingThrowsSensesCard } from '../../components/SavingThrowsSensesCard';
+import { ScreenScaffold } from '../../components/ScreenScaffold';
+import { SkillsTable } from '../../components/SkillsTable';
+import { character } from '../../data/character';
 
 export default function SkillsScreen() {
   const router = useRouter();
   const editSkills = () => Alert.alert('Edit skills', 'Editing is disabled in this prototype.');
+
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/character' as never);
+  };
 
   return (
     <ScreenScaffold>
@@ -20,7 +25,7 @@ export default function SkillsScreen() {
         initials={character.initials}
         compact
         onEdit={editSkills}
-        onBack={() => router.back()}
+        onBack={goBack}
       />
       <AbilityScores abilities={character.abilities} />
 

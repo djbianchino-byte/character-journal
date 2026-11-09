@@ -5,10 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '../theme';
 
 const TABS = [
-  { href: '/', label: 'Home', glyph: '⌂' },
-  { href: '/skills', label: 'Skills', glyph: '✶' },
-  { href: '/lore', label: 'Lore', glyph: '❧' },
-  { href: '/inventory', label: 'Bag', glyph: '▣' },
+  { href: '/', label: 'Campaign', glyph: '⚔', match: ['/'] },
+  { href: '/characters', label: 'Characters', glyph: '❖', match: ['/characters', '/character'] },
+  { href: '/lore', label: 'Lore', glyph: '❧', match: ['/lore'] },
+  { href: '/tabletop', label: 'Tabletop', glyph: '⚄', match: ['/tabletop'] },
 ] as const;
 
 /** Bottom tab navigation (custom, parchment style). */
@@ -20,7 +20,9 @@ export function TabBar() {
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {TABS.map((tab) => {
-        const active = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
+        const active = tab.match.some(
+          (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+        );
         return (
           <Pressable
             key={tab.href}

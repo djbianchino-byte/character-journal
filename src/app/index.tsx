@@ -1,191 +1,277 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AbilityScores } from '../components/AbilityScores';
-import { Card } from '../components/Card';
-import { CharacterHeader } from '../components/CharacterHeader';
-import { CombatHud } from '../components/CombatHud';
+import { CampaignHeader } from '../components/CampaignHeader';
 import { OrnamentalDivider } from '../components/OrnamentalDivider';
 import { ScreenScaffold } from '../components/ScreenScaffold';
-import { character } from '../data/character';
+import { campaign } from '../data/campaign';
 import { colors, fonts } from '../theme';
 
-function rollDie(sides: number) {
-  return Math.floor(Math.random() * sides) + 1;
-}
-
-export default function HomeScreen() {
+export default function CampaignScreen() {
   const router = useRouter();
 
-  const editCharacter = () =>
-    Alert.alert('Edit character', 'Editing is disabled in this prototype.');
-
-  const rollInitiative = () => {
-    const value = rollDie(20);
-    Alert.alert('Initiative', `d20 (${value}) + 3 = ${value + 3}`);
-  };
+  const openNotes = () => router.push('/notes' as never);
 
   return (
-    <ScreenScaffold>
-      <CharacterHeader
-        name={character.name}
-        subtitle={character.subtitle}
-        initials={character.initials}
-        onEdit={editCharacter}
+    <ScreenScaffold showDice={false}>
+      <CampaignHeader
+        title={campaign.title}
+        tall
+        onMore={() => Alert.alert('Campaign options', 'Campaign settings are outside this prototype.')}
       />
-      <AbilityScores abilities={character.abilities} />
 
-      <View style={styles.hudWrap}>
-        <CombatHud
-          armorClass={character.armorClass}
-          initiative={character.initiative}
-          hp={character.hp}
-        />
+      <View style={styles.metaRow}>
+        <Text style={styles.gameMaster}>Run by {campaign.gameMaster}</Text>
+        <View style={styles.playerPill}>
+          <Text style={styles.playerPillText}>{campaign.playerCount} PLAYERS</Text>
+        </View>
       </View>
 
-      <OrnamentalDivider label="Journal" />
+      <Text style={styles.description}>{campaign.description}</Text>
+
+      <OrnamentalDivider />
 
       <View style={styles.section}>
-        <Card title="Latest Entry" onEdit={editCharacter}>
-          <Text style={styles.entryTitle}>The Blight</Text>
-          <Text style={styles.entryBody} numberOfLines={4}>
-            {character.lore.theBlight.split('\n\n')[0]}
-          </Text>
-          <Pressable
-            onPress={() => router.push('/lore' as never)}
-            accessibilityRole="link"
-            accessibilityLabel="Read the full lore"
-            style={styles.linkRow}
+        <View style={styles.sessionCard}>
+          <LinearGradient
+            colors={['#e8d79a', '#d7bd57']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.dateBadge}
           >
-            <Text style={styles.link}>Read the full lore</Text>
-            <Text style={styles.linkArrow}>→</Text>
-          </Pressable>
-        </Card>
-      </View>
+            <Text style={styles.dateMonth}>{campaign.nextSession.month}</Text>
+            <Text style={styles.dateDay}>{campaign.nextSession.day}</Text>
+          </LinearGradient>
 
-      <View style={styles.section}>
-        <Card title="Quick Actions">
-          <View style={styles.actionRow}>
-            <Pressable
-              onPress={rollInitiative}
-              accessibilityRole="button"
-              style={[styles.actionButton, styles.actionPrimary]}
-            >
-              <Text style={[styles.actionGlyph, styles.actionGlyphPrimary]}>⚔</Text>
-              <Text style={[styles.actionLabel, styles.actionLabelPrimary]}>Roll Initiative</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => router.push('/skills' as never)}
-              accessibilityRole="button"
-              style={styles.actionButton}
-            >
-              <Text style={styles.actionGlyph}>✶</Text>
-              <Text style={styles.actionLabel}>Skills</Text>
-            </Pressable>
+          <View style={styles.sessionBody}>
+            <Text style={styles.sessionLabel}>NEXT SESSION</Text>
+            <Text style={styles.sessionTime}>{campaign.nextSession.time}</Text>
           </View>
-        </Card>
+        </View>
       </View>
 
       <View style={styles.section}>
-        <Card title="Equipment" onEdit={editCharacter}>
-          <Text style={styles.equipSummary}>
-            {character.inventory.length} items · {character.coins.gold} gp ·{' '}
-            {character.coins.silver} sp · {character.coins.copper} cp
-          </Text>
-          <Pressable
-            onPress={() => router.push('/inventory' as never)}
-            accessibilityRole="link"
-            accessibilityLabel="Open inventory"
-            style={styles.linkRow}
-          >
-            <Text style={styles.link}>Open inventory</Text>
-            <Text style={styles.linkArrow}>→</Text>
-          </Pressable>
-        </Card>
+        <Pressable
+          onPress={openNotes}
+          accessibilityRole="button"
+          accessibilityLabel="Last session’s notes"
+          style={({ pressed }) => [styles.notesRow, pressed && styles.pressed]}
+        >
+          <View style={styles.notesIcon}>
+            <Text style={styles.notesGlyph}>❧</Text>
+          </View>
+          <Text style={styles.notesLabel}>Last session’s notes</Text>
+          <Text style={styles.notesChevron}>›</Text>
+        </Pressable>
+      </View>
+
+      <OrnamentalDivider label="Explore" />
+
+      <View style={styles.section}>
+        <View style={styles.quickRow}>
+          <QuickTile
+            glyph="❖"
+            label="Characters"
+            detail={`${campaign.playerCount} players`}
+            onPress={() => router.navigate('/characters' as never)}
+          />
+          <QuickTile
+            glyph="❧"
+            label="Lore"
+            detail={`${campaign.locations.length} locations`}
+            onPress={() => router.navigate('/lore' as never)}
+          />
+          <QuickTile
+            glyph="⚄"
+            label="Tabletop"
+            detail="Dice & tools"
+            onPress={() => router.navigate('/tabletop' as never)}
+          />
+        </View>
       </View>
     </ScreenScaffold>
   );
 }
 
+function QuickTile({
+  glyph,
+  label,
+  detail,
+  onPress,
+}: {
+  glyph: string;
+  label: string;
+  detail: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${detail}`}
+      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+    >
+      <Text style={styles.tileGlyph}>{glyph}</Text>
+      <Text style={styles.tileLabel}>{label}</Text>
+      <Text style={styles.tileDetail}>{detail}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  hudWrap: {
-    paddingTop: 14,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  gameMaster: {
+    fontFamily: fonts.display,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  playerPill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.parchment200,
+  },
+  playerPillText: {
+    fontFamily: fonts.data,
+    fontSize: 9,
+    letterSpacing: 0.9,
+    color: colors.textPrimary,
+  },
+  description: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 21,
+    color: colors.textPrimary,
   },
   section: {
     paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  entryTitle: {
-    fontFamily: fonts.display,
-    fontSize: 20,
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  entryBody: {
-    fontFamily: fonts.body,
-    fontSize: 13.5,
-    lineHeight: 20,
-    color: colors.textPrimary,
-  },
-  linkRow: {
+  sessionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-    alignSelf: 'flex-start',
+    gap: 14,
+    paddingVertical: 4,
   },
-  link: {
+  dateBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dateMonth: {
     fontFamily: fonts.data,
-    fontSize: 11,
-    letterSpacing: 1,
+    fontSize: 10,
+    letterSpacing: 1.2,
     color: colors.textPrimary,
-    textTransform: 'uppercase',
-    textDecorationLine: 'underline',
   },
-  linkArrow: {
+  dateDay: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    lineHeight: 26,
+    color: colors.textPrimary,
+  },
+  sessionBody: {
+    flex: 1,
+  },
+  sessionLabel: {
+    fontFamily: fonts.data,
+    fontSize: 10.5,
+    letterSpacing: 1.4,
+    color: colors.gold,
+  },
+  sessionTime: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 27,
+    color: colors.textPrimary,
+    marginTop: 1,
+  },
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  notesIcon: {
+    width: 28,
+    height: 30,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.gold400,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  notesGlyph: {
     fontSize: 14,
     color: colors.textPrimary,
   },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
+  notesLabel: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textPrimary,
   },
-  actionButton: {
+  notesChevron: {
+    fontSize: 24,
+    lineHeight: 26,
+    color: colors.textMuted,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tile: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    gap: 3,
     paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.borderSoft,
     backgroundColor: colors.cardAlt,
   },
-  actionPrimary: {
-    backgroundColor: colors.textPrimary,
-    borderColor: colors.textPrimary,
-  },
-  actionGlyph: {
-    fontSize: 18,
+  tileGlyph: {
+    fontSize: 17,
     color: colors.textPrimary,
   },
-  actionGlyphPrimary: {
-    color: colors.parchment200,
-  },
-  actionLabel: {
-    fontFamily: fonts.data,
-    fontSize: 10.5,
-    letterSpacing: 0.8,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  actionLabelPrimary: {
-    color: colors.parchment200,
-  },
-  equipSummary: {
+  tileLabel: {
     fontFamily: fonts.body,
-    fontSize: 13.5,
-    lineHeight: 20,
+    fontSize: 13,
     color: colors.textPrimary,
+  },
+  tileDetail: {
+    fontFamily: fonts.data,
+    fontSize: 8.5,
+    letterSpacing: 0.5,
+    color: colors.textMuted,
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

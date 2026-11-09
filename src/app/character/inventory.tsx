@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Card } from '../components/Card';
-import { CharacterHeader } from '../components/CharacterHeader';
-import { ScreenScaffold } from '../components/ScreenScaffold';
-import { character } from '../data/character';
-import { colors, fonts } from '../theme';
+import { Card } from '../../components/Card';
+import { CharacterHeader } from '../../components/CharacterHeader';
+import { ScreenScaffold } from '../../components/ScreenScaffold';
+import { character } from '../../data/character';
+import { colors, fonts } from '../../theme';
 
 const TYPE_STYLE: Record<string, { initial: string; color: string }> = {
   Consumable: { initial: 'C', color: '#5c7a3a' },
@@ -19,6 +19,11 @@ export default function InventoryScreen() {
   const router = useRouter();
   const addItem = () => Alert.alert('Add item', 'Item picker is not part of this prototype.');
 
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/character' as never);
+  };
+
   return (
     <ScreenScaffold>
       <CharacterHeader
@@ -27,7 +32,7 @@ export default function InventoryScreen() {
         initials={character.initials}
         compact
         onEdit={() => Alert.alert('Edit inventory', 'Editing is disabled in this prototype.')}
-        onBack={() => router.back()}
+        onBack={goBack}
       />
 
       <View style={styles.coinRow}>
