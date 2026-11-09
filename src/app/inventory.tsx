@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '../components/Card';
@@ -15,6 +16,7 @@ const TYPE_STYLE: Record<string, { initial: string; color: string }> = {
 };
 
 export default function InventoryScreen() {
+  const router = useRouter();
   const addItem = () => Alert.alert('Add item', 'Item picker is not part of this prototype.');
 
   return (
@@ -25,6 +27,7 @@ export default function InventoryScreen() {
         initials={character.initials}
         compact
         onEdit={() => Alert.alert('Edit inventory', 'Editing is disabled in this prototype.')}
+        onBack={() => router.back()}
       />
 
       <View style={styles.coinRow}>

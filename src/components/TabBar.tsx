@@ -24,7 +24,9 @@ export function TabBar() {
         return (
           <Pressable
             key={tab.href}
-            onPress={() => router.push(tab.href as never)}
+            onPress={() => {
+              if (!active) router.navigate(tab.href as never);
+            }}
             style={styles.tab}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}

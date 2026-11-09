@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: TAB_BAR_HEIGHT + 28,
+    // Clear the floating dice button and the tab bar.
+    paddingBottom: TAB_BAR_HEIGHT + 100,
   },
 });

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { AbilityScores } from '../components/AbilityScores';
@@ -8,6 +9,7 @@ import { SkillsTable } from '../components/SkillsTable';
 import { character } from '../data/character';
 
 export default function SkillsScreen() {
+  const router = useRouter();
   const editSkills = () => Alert.alert('Edit skills', 'Editing is disabled in this prototype.');
 
   return (
@@ -18,6 +20,7 @@ export default function SkillsScreen() {
         initials={character.initials}
         compact
         onEdit={editSkills}
+        onBack={() => router.back()}
       />
       <AbilityScores abilities={character.abilities} />
 
