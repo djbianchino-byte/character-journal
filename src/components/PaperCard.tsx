@@ -66,10 +66,19 @@ type InfoRowProps = {
 
 /** Label on the left, display value on the right, hairline beneath. */
 export function InfoRow({ label, value, last, emphasis }: InfoRowProps) {
+  const short = value.length <= 12 && /\d/.test(value);
   return (
     <View style={[styles.infoRow, !last && styles.infoBorder]}>
       <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={[styles.infoValue, emphasis && styles.infoValueLarge]}>{value}</Text>
+      <Text
+        style={[
+          styles.infoValue,
+          !short && styles.infoValueText,
+          emphasis && styles.infoValueLarge,
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -146,6 +155,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: colors.ink,
     marginLeft: 12,
+  },
+  infoValueText: {
+    fontFamily: fonts.display,
+    fontSize: 17,
   },
   infoValueLarge: {
     fontSize: 24,

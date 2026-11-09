@@ -14,12 +14,14 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { character } from '../data/character';
+import { journalSections, type JournalSection } from '../data/journal';
 import { colors, fonts, radius, SHEET_WIDTH } from '../theme';
 import { AbilityStrip } from './AbilityStrip';
 import { GoldHeader } from './GoldHeader';
 
 const paper = require('../../assets/ui/paper-texture.jpg');
 const bookIcon = require('../../assets/ui/rail-book.png');
+const openBookIcon = require('../../assets/ui/rail-open-book.png');
 const pouchIcon = require('../../assets/ui/rail-pouch.png');
 const classIcon = require('../../assets/ui/rail-class.png');
 const acIcon = require('../../assets/ui/rail-ac.png');
@@ -33,6 +35,8 @@ type Props = {
   children: ReactNode;
   variant?: 'home' | 'page';
   active?: RailKey;
+  /** Set while a journal page is open; shows the section buttons on the rail. */
+  journalSection?: JournalSection;
   onEdit?: () => void;
 };
 
@@ -40,7 +44,8 @@ type Props = {
  * The parchment sheet used by every screen: textured paper, gold identity
  * banner, fixed ability strip, floating bookmark rail and d20.
  */
-export function SheetScaffold({ children, variant = 'page', active, onEdit }: Props) {
+export function SheetScaffold({ children, variant = 'page', active, journalSection, onEdit }: Props) {
+  const journalOpen = journalSection !== undefined;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -80,11 +85,36 @@ export function SheetScaffold({ children, variant = 'page', active, onEdit }: Pr
               <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
                 <View style={styles.railTop}>
                   <RailButton
-                    icon={bookIcon}
+                    icon={journalOpen ? openBookIcon : bookIcon}
                     label="Open journal"
-                    active={active === 'journal'}
+                    active={journalOpen || active === 'journal'}
                     onPress={() => router.push('/journal' as never)}
                   />
+                  {journalSection !== undefined ? (
+                    <View style={styles.sectionStack} accessibilityRole="tablist">
+                      {journalSections.map(section => {
+                        const selected = section.key === journalSection;
+                        return (
+                          <Pressable
+                            key={section.key}
+                            onPress={() => router.replace(`/journal?section=${section.key}` as never)}
+                            accessibilityRole="tab"
+                            accessibilityLabel={section.label}
+                            accessibilityState={{ selected }}
+                            style={({ pressed }) => [
+                              styles.sectionTab,
+                              selected && styles.sectionTabActive,
+                              pressed && styles.railPressed,
+                            ]}
+                          >
+                            <Text style={[styles.sectionText, selected && styles.sectionTextActive]}>
+                              {section.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ) : null}
                   <RailButton
                     icon={pouchIcon}
                     label="Open inventory"
@@ -227,8 +257,34 @@ const styles = StyleSheet.create({
     paddingRight: 14,
   },
   pageContent: {
-    paddingLeft: 60,
+    paddingLeft: 66,
     paddingRight: 12,
+  },
+  sectionStack: {
+    gap: 6,
+    marginLeft: 1,
+  },
+  sectionTab: {
+    width: 56,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 3,
+    backgroundColor: colors.card,
+  },
+  sectionTabActive: {
+    backgroundColor: colors.ink,
+  },
+  sectionText: {
+    fontFamily: fonts.display,
+    fontSize: 11,
+    lineHeight: 13,
+    color: colors.ink,
+  },
+  sectionTextActive: {
+    color: colors.cream,
   },
   railTop: {
     position: 'absolute',

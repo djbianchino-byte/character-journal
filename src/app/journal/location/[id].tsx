@@ -23,7 +23,7 @@ export default function LocationScreen() {
   }
 
   return (
-    <SheetScaffold>
+    <SheetScaffold journalSection="places">
       <View style={styles.head}>
         <View style={[styles.medallion, { backgroundColor: location.tint }]}>
           <Text style={styles.initial}>{location.initial}</Text>
