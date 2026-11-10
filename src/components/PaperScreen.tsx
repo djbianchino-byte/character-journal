@@ -32,7 +32,7 @@ export function PaperScreen({ kicker, title, onBack, children }: Props) {
 
   return (
     <View style={[styles.root, framed && styles.rootFramed]}>
-      <View style={[styles.sheet, framed && styles.sheetFramed]}>
+      <View style={[styles.sheet, framed ? styles.sheetFramed : styles.sheetFull]}>
         <ImageBackground source={paper} resizeMode="cover" style={styles.paper}>
           <SafeAreaView edges={['top']} style={styles.safe}>
             <View style={styles.header}>
@@ -76,15 +76,19 @@ const styles = StyleSheet.create({
   },
   sheet: {
     width: '100%',
-    flex: 1,
     backgroundColor: colors.parchment,
     overflow: 'hidden',
+  },
+  sheetFull: {
+    flex: 1,
   },
   sheetFramed: {
     width: SHEET_WIDTH,
     height: '100%',
     maxHeight: 844,
-    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
     borderRadius: radius.sheet,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.35)',
