@@ -3,16 +3,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PaperScreen } from '../../../components/PaperScreen';
-import { addEntity, entityKindLabels, type EntityKind } from '../../../data/dmStore';
+import { addEntity, entityFieldLabels as fieldLabels, entityKindLabels, type EntityKind } from '../../../data/dmStore';
 import { colors, fonts, paperShadow, radius } from '../../../theme';
-
-const fieldLabels: Record<EntityKind, { title: string; subtitle: string; body: string }> = {
-  location: { title: 'Name', subtitle: 'Region', body: 'Summary' },
-  character: { title: 'Name', subtitle: 'Role', body: 'Notes' },
-  event: { title: 'Title', subtitle: 'When', body: 'Summary' },
-  item: { title: 'Name', subtitle: 'Kind', body: 'Description' },
-  story: { title: 'Title', subtitle: 'Label', body: 'Story' },
-};
 
 function resolveKind(value: string | undefined): EntityKind {
   return value === 'character' || value === 'event' || value === 'item' || value === 'story' ? value : 'location';

@@ -12,6 +12,15 @@ export const entityKindLabels: Record<EntityKind, string> = {
   story: 'Story',
 };
 
+/** Labels for the three fields of each kind, shared by the add and edit forms. */
+export const entityFieldLabels: Record<EntityKind, { title: string; subtitle: string; body: string }> = {
+  location: { title: 'Name', subtitle: 'Region', body: 'Summary' },
+  character: { title: 'Name', subtitle: 'Role', body: 'Notes' },
+  event: { title: 'Title', subtitle: 'When', body: 'Summary' },
+  item: { title: 'Name', subtitle: 'Kind', body: 'Description' },
+  story: { title: 'Title', subtitle: 'Label', body: 'Story' },
+};
+
 const kindTints: Record<EntityKind, string> = {
   location: '#6f512b',
   character: '#5f6b8a',
@@ -179,7 +188,7 @@ export function addEntity(
 export function updateEntity(
   campaignId: string,
   entityId: string,
-  patch: { title?: string; subtitle?: string; body?: string },
+  patch: { title?: string; subtitle?: string; body?: string; facts?: string[] },
 ) {
   const current = currentFor(campaignId);
   update(campaignId, {
@@ -191,6 +200,7 @@ export function updateEntity(
             title: patch.title?.trim() || entity.title,
             subtitle: patch.subtitle?.trim() ?? entity.subtitle,
             body: patch.body?.trim() ?? entity.body,
+            facts: patch.facts ?? entity.facts,
           }
         : entity,
     ),

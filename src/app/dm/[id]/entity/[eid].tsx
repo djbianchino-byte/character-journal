@@ -1,11 +1,19 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PaperCard } from '../../../../components/PaperCard';
 import { PaperScreen } from '../../../../components/PaperScreen';
 import { PinToggle } from '../../../../components/PinToggle';
-import { entityKindLabels, togglePin, useDm } from '../../../../data/dmStore';
-import { colors, fonts } from '../../../../theme';
+import {
+  entityFieldLabels,
+  entityKindLabels,
+  togglePin,
+  updateEntity,
+  useDm,
+  type DmEntity,
+} from '../../../../data/dmStore';
+import { colors, fonts, radius } from '../../../../theme';
 
 export default function DmEntityScreen() {
   const router = useRouter();
@@ -31,29 +39,147 @@ export default function DmEntityScreen() {
     );
   }
 
-  const label = entityKindLabels[entity.kind];
+  return (
+    <EntityDetail
+      key={entity.id}
+      campaignId={id}
+      entity={entity}
+      onTogglePin={() => togglePin(id, entity.id)}
+      onBack={leave}
+    />
+  );
+}
+
+type DetailProps = {
+  campaignId: string;
+  entity: DmEntity;
+  onTogglePin: () => void;
+  onBack: () => void;
+};
+
+function EntityDetail({ campaignId, entity, onTogglePin, onBack }: DetailProps) {
+  const labels = entityFieldLabels[entity.kind];
+  const kindLabel = entityKindLabels[entity.kind];
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(entity.title);
+  const [subtitle, setSubtitle] = useState(entity.subtitle);
+  const [body, setBody] = useState(entity.body);
+  const [facts, setFacts] = useState(entity.facts.join('\n'));
+
+  function startEditing() {
+    setTitle(entity.title);
+    setSubtitle(entity.subtitle);
+    setBody(entity.body);
+    setFacts(entity.facts.join('\n'));
+    setEditing(true);
+  }
+
+  function save() {
+    if (title.trim().length === 0) {
+      return;
+    }
+    updateEntity(campaignId, entity.id, {
+      title,
+      subtitle,
+      body,
+      facts: facts
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0),
+    });
+    setEditing(false);
+  }
 
   return (
     <PaperScreen
-      kicker={entity.subtitle ? `${label} · ${entity.subtitle}` : label}
+      kicker={entity.subtitle ? `${kindLabel} · ${entity.subtitle}` : kindLabel}
       title={entity.title}
-      onBack={leave}
+      onBack={onBack}
     >
       <View style={styles.pinRow}>
-        <PinToggle pinned={entity.pinned} onToggle={() => togglePin(id, entity.id)} title={entity.title} />
+        <PinToggle pinned={entity.pinned} onToggle={onTogglePin} title={entity.title} />
       </View>
 
-      {entity.body ? (
-        <PaperCard label="About" style={styles.gap}>
-          {entity.body.split('\n\n').map((paragraph, index) => (
-            <Text key={index} style={[styles.body, index > 0 && styles.paragraphGap]}>
-              {paragraph}
-            </Text>
-          ))}
-        </PaperCard>
-      ) : null}
+      <PaperCard
+        label={kindLabel}
+        title={entity.title}
+        onAction={editing ? () => setEditing(false) : startEditing}
+        actionLabel={editing ? `Cancel editing ${entity.title}` : `Edit ${entity.title}`}
+      >
+        {editing ? (
+          <View style={styles.form}>
+            <Text style={styles.label}>{labels.title}</Text>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              maxLength={60}
+              accessibilityLabel={labels.title}
+              style={styles.input}
+            />
 
-      {entity.facts.length > 0 ? (
+            <Text style={styles.label}>{labels.subtitle}</Text>
+            <TextInput
+              value={subtitle}
+              onChangeText={setSubtitle}
+              maxLength={60}
+              accessibilityLabel={labels.subtitle}
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>{labels.body}</Text>
+            <TextInput
+              value={body}
+              onChangeText={setBody}
+              multiline
+              maxLength={1200}
+              textAlignVertical="top"
+              accessibilityLabel={labels.body}
+              style={[styles.input, styles.multiline]}
+            />
+
+            <Text style={styles.label}>What we know · one per line</Text>
+            <TextInput
+              value={facts}
+              onChangeText={setFacts}
+              multiline
+              maxLength={1200}
+              textAlignVertical="top"
+              accessibilityLabel="What we know"
+              style={[styles.input, styles.multiline]}
+            />
+
+            <View style={styles.formActions}>
+              <Pressable
+                onPress={() => setEditing(false)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={save}
+                accessibilityRole="button"
+                accessibilityLabel="Save changes"
+                style={({ pressed }) => [styles.save, pressed && styles.pressed]}
+              >
+                <Text style={styles.saveText}>Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View>
+            {entity.body
+              ? entity.body.split('\n\n').map((paragraph, index) => (
+                  <Text key={index} style={[styles.body, index > 0 && styles.paragraphGap]}>
+                    {paragraph}
+                  </Text>
+                ))
+              : <Text style={styles.empty}>No details written yet. Tap the quill to add some.</Text>}
+          </View>
+        )}
+      </PaperCard>
+
+      {!editing && entity.facts.length > 0 ? (
         <PaperCard label="What we know" style={styles.gap}>
           {entity.facts.map((fact, index) => (
             <View key={fact} style={[styles.factRow, index === entity.facts.length - 1 && styles.factRowLast]}>
@@ -81,6 +207,12 @@ const styles = StyleSheet.create({
   paragraphGap: {
     marginTop: 8,
   },
+  empty: {
+    fontFamily: fonts.displayItalic,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.muted,
+  },
   gap: {
     marginTop: 11,
   },
@@ -106,5 +238,63 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     lineHeight: 19,
     color: colors.ink,
+  },
+  form: {
+    gap: 4,
+  },
+  label: {
+    marginTop: 6,
+    fontFamily: fonts.body,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: colors.muted,
+  },
+  input: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.ink,
+    backgroundColor: 'rgba(255, 252, 246, 0.85)',
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+  },
+  multiline: {
+    minHeight: 100,
+  },
+  formActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: 8,
+  },
+  cancel: {
+    paddingVertical: 6,
+  },
+  cancelText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.muted,
+  },
+  save: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    backgroundColor: colors.green,
+  },
+  saveText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.goldLight,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
