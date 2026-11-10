@@ -1,0 +1,116 @@
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { entityKindLabels, type DmEntity } from '../data/dmStore';
+import { colors, fonts, paperShadow, radius } from '../theme';
+
+type Props = {
+  entity: DmEntity;
+  onPress: () => void;
+};
+
+/** One location, character, event or item in a DM list. */
+export function EntityCard({ entity, onPress }: Props) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${entity.title}, ${entityKindLabels[entity.kind]}`}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    >
+      <View style={[styles.medallion, { backgroundColor: entity.tint }]}>
+        <Text style={styles.initial}>{entity.initial}</Text>
+      </View>
+
+      <View style={styles.body}>
+        <Text style={styles.title}>{entity.title}</Text>
+        <Text style={styles.kicker}>
+          {entityKindLabels[entity.kind]}
+          {entity.subtitle ? ` · ${entity.subtitle}` : ''}
+        </Text>
+        {entity.body ? (
+          <Text style={styles.summary} numberOfLines={2}>
+            {entity.body}
+          </Text>
+        ) : null}
+      </View>
+
+      <View style={styles.side}>
+        {entity.pinned ? <Text style={styles.pin}>◆</Text> : null}
+        <Text style={styles.chevron}>›</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 11,
+    padding: 12,
+    marginBottom: 10,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    ...paperShadow,
+  },
+  pressed: {
+    opacity: 0.75,
+  },
+  medallion: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initial: {
+    fontFamily: fonts.display,
+    fontSize: 19,
+    lineHeight: 21,
+    color: colors.cream,
+  },
+  body: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 19,
+    lineHeight: 22,
+    color: colors.ink,
+  },
+  kicker: {
+    fontFamily: fonts.body,
+    fontSize: 9.5,
+    lineHeight: 13,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.muted,
+    marginTop: 1,
+  },
+  summary: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.inkSoft,
+    marginTop: 4,
+  },
+  side: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  pin: {
+    fontSize: 9,
+    color: colors.goldDark,
+  },
+  chevron: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 24,
+    color: colors.ink,
+    opacity: 0.6,
+  },
+});
