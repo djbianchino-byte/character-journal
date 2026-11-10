@@ -53,7 +53,7 @@ export default function DiceScreen() {
       router.back();
       return;
     }
-    router.replace('/' as never);
+    router.replace('/character' as never);
   }
 
   function roll() {

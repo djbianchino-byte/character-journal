@@ -65,7 +65,7 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
       <View style={[styles.sheet, framed ? styles.sheetFramed : styles.sheetFull]}>
         <ImageBackground source={paper} resizeMode="cover" style={styles.paper}>
           <SafeAreaView edges={['top']} style={styles.safe}>
-            <GoldHeader showBack={!isHome} onBack={goBack} onEdit={onEdit} />
+            <GoldHeader onBack={goBack} onEdit={onEdit} />
             <AbilityStrip onPress={() => router.push('/abilities' as never)} />
 
             <View style={styles.body}>
@@ -88,7 +88,7 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
                     icon={journalOpen ? openBookIcon : bookIcon}
                     label="Open journal"
                     active={journalOpen || active === 'journal'}
-                    onPress={() => (journalOpen ? router.replace('/' as never) : router.push('/journal' as never))}
+                    onPress={() => (journalOpen ? router.replace('/character' as never) : router.push('/journal' as never))}
                   />
                   {journalSection !== undefined ? (
                     <View style={styles.sectionStack} accessibilityRole="tablist">

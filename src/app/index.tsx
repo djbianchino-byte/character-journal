@@ -1,112 +1,116 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { InfoRow, Kicker, PaperCard } from '../components/PaperCard';
-import { SheetScaffold } from '../components/SheetScaffold';
-import { campaign } from '../data/campaign';
-import { character } from '../data/character';
-import { colors, fonts } from '../theme';
+import { PaperScreen } from '../components/PaperScreen';
+import { useCampaigns } from '../data/campaignList';
+import { colors, fonts, paperShadow, radius } from '../theme';
 
-export default function OverviewScreen() {
+export default function CampaignsScreen() {
   const router = useRouter();
+  const campaigns = useCampaigns();
 
   return (
-    <SheetScaffold variant="home">
-      <View style={styles.hero}>
-        <Kicker>{campaign.title} · Session 12</Kicker>
-        <Text style={styles.quote}>
-          “I am the shield{'\n'}that does not break.”
-        </Text>
-        <Text style={styles.attribution}>— Ser Garyth</Text>
-      </View>
-
-      <PaperCard label="Next at the table" title="Session 13">
-        <Text style={styles.meta}>
-          {campaign.nextSession.month} {campaign.nextSession.day} · {campaign.nextSession.time}
-        </Text>
-        <Text style={styles.metaSoft}>The Last Hearth · bring your dice</Text>
+    <PaperScreen kicker="Choose a table" title="Your campaigns">
+      {campaigns.map(item => (
         <Pressable
-          onPress={() => router.push('/journal' as never)}
+          key={item.id}
+          onPress={() => router.push('/character' as never)}
           accessibilityRole="button"
-          accessibilityLabel="Open the journal"
-          style={styles.linkRow}
+          accessibilityLabel={`Open ${item.title}`}
+          style={({ pressed }) => [styles.card, pressed && styles.pressed]}
         >
-          <Text style={styles.link}>Open journal</Text>
-          <Text style={styles.linkArrow}>›</Text>
+          <View style={styles.cardBody}>
+            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardMeta}>
+              GM {item.gameMaster} · {item.playerCount} {item.playerCount === 1 ? 'player' : 'players'}
+            </Text>
+            <Text style={styles.cardText} numberOfLines={3}>
+              {item.description}
+            </Text>
+            <Text style={styles.cardNext}>Next session · {item.nextSession}</Text>
+          </View>
+          <Text style={styles.chevron}>›</Text>
         </Pressable>
-      </PaperCard>
+      ))}
 
-      <PaperCard label="At a glance" style={styles.gap}>
-        <InfoRow label="Proficiency" value={character.proficiencyBonus} />
-        <InfoRow label="Passive Perception" value={String(character.senses.passivePerception)} />
-        <InfoRow label="Darkvision" value={character.senses.darkvision} last />
-      </PaperCard>
-
-      <Text style={styles.hint}>Tap the ability scores for saving throws and skills.</Text>
-    </SheetScaffold>
+      <Pressable
+        onPress={() => router.push('/join' as never)}
+        accessibilityRole="button"
+        accessibilityLabel="Add another campaign"
+        style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}
+      >
+        <Text style={styles.addText}>+ Add another campaign</Text>
+      </Pressable>
+    </PaperScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: 4,
-    marginBottom: 18,
-  },
-  quote: {
-    marginTop: 7,
-    fontFamily: fonts.display,
-    fontSize: 27,
-    lineHeight: 32,
-    color: colors.ink,
-  },
-  attribution: {
-    marginTop: 4,
-    fontFamily: fonts.displayItalic,
-    fontSize: 15,
-    lineHeight: 19,
-    color: colors.muted,
-  },
-  meta: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.ink,
-  },
-  metaSoft: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    lineHeight: 17,
-    color: colors.muted,
-    marginTop: 2,
-  },
-  linkRow: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginTop: 11,
+    gap: 10,
+    padding: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    ...paperShadow,
   },
-  link: {
+  pressed: {
+    opacity: 0.75,
+  },
+  cardBody: {
+    flex: 1,
+  },
+  cardTitle: {
     fontFamily: fonts.display,
-    fontSize: 17,
-    lineHeight: 20,
-    color: colors.ink,
-    textDecorationLine: 'underline',
-  },
-  linkArrow: {
-    fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 20,
+    fontSize: 24,
+    lineHeight: 27,
     color: colors.ink,
   },
-  gap: {
-    marginTop: 12,
-  },
-  hint: {
-    marginTop: 16,
+  cardMeta: {
     fontFamily: fonts.body,
     fontSize: 11.5,
     lineHeight: 16,
     color: colors.muted,
-    textAlign: 'center',
+    marginTop: 2,
+  },
+  cardText: {
+    fontFamily: fonts.body,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: colors.inkSoft,
+    marginTop: 8,
+  },
+  cardNext: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.ink,
+    marginTop: 8,
+  },
+  chevron: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    lineHeight: 30,
+    color: colors.ink,
+    opacity: 0.6,
+  },
+  addButton: {
+    height: 50,
+    marginTop: 4,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: '#1c2a17',
+    backgroundColor: colors.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addText: {
+    fontFamily: fonts.display,
+    fontSize: 19,
+    lineHeight: 22,
+    color: colors.goldLight,
   },
 });

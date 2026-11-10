@@ -43,7 +43,7 @@ export default function JournalScreen() {
 
   function openCharacter(name: string, playedBy: string, isYou?: boolean) {
     if (isYou) {
-      router.push('/' as never);
+      router.push('/character' as never);
       return;
     }
     Alert.alert(name, `This sheet is played by ${playedBy}.`);

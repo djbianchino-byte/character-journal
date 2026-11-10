@@ -39,7 +39,7 @@ export default function AbilitiesScreen() {
       router.back();
       return;
     }
-    router.replace('/' as never);
+    router.replace('/character' as never);
   }
 
   return (
