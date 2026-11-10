@@ -2,14 +2,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { entityKindLabels, type DmEntity } from '../data/dmStore';
 import { colors, fonts, paperShadow, radius } from '../theme';
+import { PinToggle } from './PinToggle';
 
 type Props = {
   entity: DmEntity;
   onPress: () => void;
+  onTogglePin: () => void;
 };
 
-/** One location, character, event or item in a DM list. */
-export function EntityCard({ entity, onPress }: Props) {
+/** One location, character, event, item or story detail in a DM list. */
+export function EntityCard({ entity, onPress, onTogglePin }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -35,7 +37,7 @@ export function EntityCard({ entity, onPress }: Props) {
       </View>
 
       <View style={styles.side}>
-        {entity.pinned ? <Text style={styles.pin}>◆</Text> : null}
+        <PinToggle pinned={entity.pinned} onToggle={onTogglePin} title={entity.title} />
         <Text style={styles.chevron}>›</Text>
       </View>
     </Pressable>
@@ -99,12 +101,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   side: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  pin: {
-    fontSize: 9,
-    color: colors.goldDark,
+    alignItems: 'flex-end',
+    gap: 6,
   },
   chevron: {
     fontFamily: fonts.display,

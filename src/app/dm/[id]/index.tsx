@@ -4,14 +4,22 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AddButton } from '../../../components/AddButton';
 import { EntityCard } from '../../../components/EntityCard';
-import { StorySection } from '../../../components/CampaignContent';
 import { InfoRow, PaperCard } from '../../../components/PaperCard';
 import { PaperScreen } from '../../../components/PaperScreen';
 import { PartyRow } from '../../../components/PartyRow';
+import { StoryCard } from '../../../components/StoryCard';
 import { TabRow, type TabItem } from '../../../components/TabRow';
 import { campaign } from '../../../data/campaign';
 import { useCampaigns } from '../../../data/campaignList';
-import { entityKindLabels, setSessionLive, togglePin, useDm, type DmEntity, type EntityKind } from '../../../data/dmStore';
+import {
+  entityKindLabels,
+  setSessionLive,
+  togglePin,
+  updateEntity,
+  useDm,
+  type DmEntity,
+  type EntityKind,
+} from '../../../data/dmStore';
 import { colors, fonts } from '../../../theme';
 
 type DmTab = 'story' | 'locations' | 'characters' | 'events' | 'items';
@@ -60,8 +68,8 @@ export default function DmCampaignScreen() {
   }
 
   const campaignId = item.id;
-  // The sample party and story belong to The Ashen Crown only.
-  const hasLore = campaignId === campaign.id;
+  // The sample party belongs to The Ashen Crown only.
+  const hasParty = campaignId === campaign.id;
   const pinned = dm.entities.filter(entry => entry.pinned);
   const unpinned = dm.entities.filter(entry => !entry.pinned);
 
@@ -91,11 +99,10 @@ export default function DmCampaignScreen() {
         <Text style={styles.body}>Players enter this code on the join screen to sit at your table.</Text>
       </PaperCard>
 
-      <PaperCard label={dm.live ? 'Session in progress' : 'Session'} style={styles.gap}>
+      <PaperCard label="Next session" style={styles.gap}>
+        <Text style={styles.nextTitle}>{item.nextSession}</Text>
         <Text style={styles.body}>
-          {dm.live
-            ? 'The table is live. End the session when you wrap up.'
-            : 'Start a session to mark the table as live.'}
+          {dm.live ? 'The table is live. End the session when you wrap up.' : 'Not started yet.'}
         </Text>
         <AddButton
           label={dm.live ? 'End session' : 'Start session'}
@@ -104,10 +111,22 @@ export default function DmCampaignScreen() {
         />
       </PaperCard>
 
-      <PaperCard label="Pinned to home" style={styles.gap}>
+      <PaperCard style={styles.gap}>
+        <View style={styles.pinnedHead}>
+          <Text style={styles.pinnedLabel}>Pinned to home</Text>
+          <Pressable
+            onPress={() => setPinning(current => !current)}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={pinning ? 'Done pinning' : 'Pin something to home'}
+          >
+            <Text style={styles.pinnedToggle}>{pinning ? 'Done' : '+ Pin'}</Text>
+          </Pressable>
+        </View>
+
         {pinned.length === 0 ? (
           <Text style={styles.empty}>
-            Nothing is pinned yet. Pin a location, character, event or item to keep it here.
+            Nothing is pinned yet. Pin a location, character, event, item or story detail to keep it here.
           </Text>
         ) : (
           pinned.map((entity, index) => (
@@ -132,11 +151,6 @@ export default function DmCampaignScreen() {
             </View>
           ))
         )}
-
-        <AddButton
-          label={pinning ? 'Done pinning' : '+ Pin something'}
-          onPress={() => setPinning(current => !current)}
-        />
 
         {pinning ? (
           unpinned.length === 0 ? (
@@ -166,38 +180,58 @@ export default function DmCampaignScreen() {
       </View>
 
       {active === 'story' ? (
-        hasLore ? (
-          <>
-            <PaperCard label="The table">
-              <InfoRow label="Game master" value="You" />
-              <InfoRow label="Next session" value={item.nextSession} />
-              <InfoRow label="Players" value={String(item.playerCount)} last />
-            </PaperCard>
-            <View style={styles.gap}>
-              <StorySection />
-            </View>
-          </>
-        ) : (
-          <PaperCard label="Story">
-            <Text style={styles.empty}>No story has been written for this campaign yet.</Text>
+        <View>
+          <PaperCard label="The table">
+            <InfoRow label="Game master" value="You" />
+            <InfoRow label="Players" value={String(item.playerCount)} last />
           </PaperCard>
-        )
+
+          {listFor('story').map(entity => (
+            <View key={entity.id} style={styles.gap}>
+              <StoryCard
+                entity={entity}
+                onTogglePin={() => togglePin(campaignId, entity.id)}
+                onSave={patch => updateEntity(campaignId, entity.id, patch)}
+              />
+            </View>
+          ))}
+
+          <View style={styles.gap}>
+            <AddButton label="+ Add detail" onPress={() => addNew('story')} />
+          </View>
+
+          <Text style={styles.sectionLabel}>Artifacts</Text>
+          {listFor('item').length === 0 ? (
+            <Text style={styles.empty}>No artifacts yet.</Text>
+          ) : (
+            listFor('item').map(entity => (
+              <EntityCard
+                key={entity.id}
+                entity={entity}
+                onPress={() => openEntity(entity)}
+                onTogglePin={() => togglePin(campaignId, entity.id)}
+              />
+            ))
+          )}
+        </View>
       ) : null}
 
-      {active === 'characters' && hasLore ? (
-        <PaperCard label="The party">
-          {campaign.roster.map(player => (
-            <PartyRow
-              key={player.id}
-              name={player.name}
-              initial={player.initial}
-              meta={player.isYou ? `${player.meta} · your character` : `${player.meta} · played by ${player.playedBy}`}
-              tint={player.tint}
-              isYou={player.isYou}
-              onPress={() => router.push(`/dm/${campaignId}/character/${player.id}` as never)}
-            />
-          ))}
-        </PaperCard>
+      {active === 'characters' && hasParty ? (
+        <View style={styles.gap}>
+          <PaperCard label="The party">
+            {campaign.roster.map(player => (
+              <PartyRow
+                key={player.id}
+                name={player.name}
+                initial={player.initial}
+                meta={player.isYou ? `${player.meta} · your character` : `${player.meta} · played by ${player.playedBy}`}
+                tint={player.tint}
+                isYou={player.isYou}
+                onPress={() => router.push(`/dm/${campaignId}/character/${player.id}` as never)}
+              />
+            ))}
+          </PaperCard>
+        </View>
       ) : null}
 
       {currentKind ? (
@@ -206,7 +240,12 @@ export default function DmCampaignScreen() {
             <Text style={styles.empty}>Nothing here yet.</Text>
           ) : (
             listFor(currentKind).map(entity => (
-              <EntityCard key={entity.id} entity={entity} onPress={() => openEntity(entity)} />
+              <EntityCard
+                key={entity.id}
+                entity={entity}
+                onPress={() => openEntity(entity)}
+                onTogglePin={() => togglePin(campaignId, entity.id)}
+              />
             ))
           )}
           <AddButton
@@ -234,14 +273,53 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colors.ink,
   },
+  nextTitle: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 25,
+    color: colors.ink,
+    marginBottom: 4,
+  },
   empty: {
     fontFamily: fonts.displayItalic,
     fontSize: 14,
     lineHeight: 19,
     color: colors.muted,
   },
+  sectionLabel: {
+    marginTop: 16,
+    marginBottom: 8,
+    fontFamily: fonts.body,
+    fontSize: 10,
+    lineHeight: 13,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: colors.muted,
+  },
   gap: {
     marginTop: 11,
+  },
+  pinnedHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  pinnedLabel: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    lineHeight: 15,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colors.ink,
+  },
+  pinnedToggle: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    lineHeight: 13,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: colors.muted,
   },
   pinRow: {
     flexDirection: 'row',

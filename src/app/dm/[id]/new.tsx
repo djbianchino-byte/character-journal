@@ -11,10 +11,11 @@ const fieldLabels: Record<EntityKind, { title: string; subtitle: string; body: s
   character: { title: 'Name', subtitle: 'Role', body: 'Notes' },
   event: { title: 'Title', subtitle: 'When', body: 'Summary' },
   item: { title: 'Name', subtitle: 'Kind', body: 'Description' },
+  story: { title: 'Title', subtitle: 'Label', body: 'Story' },
 };
 
 function resolveKind(value: string | undefined): EntityKind {
-  return value === 'character' || value === 'event' || value === 'item' ? value : 'location';
+  return value === 'character' || value === 'event' || value === 'item' || value === 'story' ? value : 'location';
 }
 
 export default function NewEntityScreen() {

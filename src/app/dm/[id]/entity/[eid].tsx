@@ -1,9 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { AddButton } from '../../../../components/AddButton';
-import { InfoRow, PaperCard } from '../../../../components/PaperCard';
+import { PaperCard } from '../../../../components/PaperCard';
 import { PaperScreen } from '../../../../components/PaperScreen';
+import { PinToggle } from '../../../../components/PinToggle';
 import { entityKindLabels, togglePin, useDm } from '../../../../data/dmStore';
 import { colors, fonts } from '../../../../theme';
 
@@ -39,14 +39,9 @@ export default function DmEntityScreen() {
       title={entity.title}
       onBack={leave}
     >
-      <PaperCard label="Pinned to campaign home">
-        <InfoRow label="On the home screen" value={entity.pinned ? 'Yes' : 'No'} last />
-        <AddButton
-          label={entity.pinned ? 'Unpin from home' : 'Pin to campaign home'}
-          primary={!entity.pinned}
-          onPress={() => togglePin(id, entity.id)}
-        />
-      </PaperCard>
+      <View style={styles.pinRow}>
+        <PinToggle pinned={entity.pinned} onToggle={() => togglePin(id, entity.id)} title={entity.title} />
+      </View>
 
       {entity.body ? (
         <PaperCard label="About" style={styles.gap}>
@@ -73,6 +68,10 @@ export default function DmEntityScreen() {
 }
 
 const styles = StyleSheet.create({
+  pinRow: {
+    alignItems: 'flex-end',
+    marginBottom: 4,
+  },
   body: {
     fontFamily: fonts.body,
     fontSize: 13.5,

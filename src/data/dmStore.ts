@@ -2,13 +2,14 @@ import { useSyncExternalStore } from 'react';
 
 import { campaign } from './campaign';
 
-export type EntityKind = 'location' | 'character' | 'event' | 'item';
+export type EntityKind = 'location' | 'character' | 'event' | 'item' | 'story';
 
 export const entityKindLabels: Record<EntityKind, string> = {
   location: 'Location',
   character: 'Character',
   event: 'Event',
   item: 'Item',
+  story: 'Story',
 };
 
 const kindTints: Record<EntityKind, string> = {
@@ -16,6 +17,7 @@ const kindTints: Record<EntityKind, string> = {
   character: '#5f6b8a',
   event: '#7a5c1f',
   item: '#4f5f4a',
+  story: '#6b4a24',
 };
 
 export type DmEntity = {
@@ -90,7 +92,31 @@ function seedEntities(): DmEntity[] {
     pinned: index === 0,
   }));
 
-  return [...locations, ...characters, ...events, ...items];
+  const chapters: DmEntity[] = campaign.story.map((chapter, index) => ({
+    id: `story-chapter-${index}`,
+    kind: 'story',
+    title: chapter.title,
+    subtitle: '',
+    body: chapter.body,
+    facts: [],
+    initial: initialFor(chapter.title),
+    tint: kindTints.story,
+    pinned: false,
+  }));
+
+  const lastSession: DmEntity = {
+    id: 'story-last-session',
+    kind: 'story',
+    title: campaign.lastSession.title,
+    subtitle: campaign.lastSession.date,
+    body: campaign.lastSession.recap.join('\n\n'),
+    facts: campaign.lastSession.loot,
+    initial: initialFor(campaign.lastSession.title),
+    tint: kindTints.story,
+    pinned: false,
+  };
+
+  return [...locations, ...characters, ...events, ...items, ...chapters, lastSession];
 }
 
 let state: Record<string, CampaignDm> = {
@@ -143,6 +169,27 @@ export function addEntity(
     ],
   });
   return id;
+}
+
+export function updateEntity(
+  campaignId: string,
+  entityId: string,
+  patch: { title?: string; subtitle?: string; body?: string },
+) {
+  const current = currentFor(campaignId);
+  update(campaignId, {
+    ...current,
+    entities: current.entities.map(entity =>
+      entity.id === entityId
+        ? {
+            ...entity,
+            title: patch.title?.trim() || entity.title,
+            subtitle: patch.subtitle?.trim() ?? entity.subtitle,
+            body: patch.body?.trim() ?? entity.body,
+          }
+        : entity,
+    ),
+  });
 }
 
 export function togglePin(campaignId: string, entityId: string) {
