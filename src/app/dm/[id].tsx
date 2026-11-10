@@ -1,10 +1,20 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { InfoRow, Kicker, PaperCard } from '../../components/PaperCard';
 import { PaperScreen } from '../../components/PaperScreen';
 import { useCampaigns } from '../../data/campaignList';
+import type { JournalSection } from '../../data/journal';
 import { colors, fonts } from '../../theme';
+
+/** The lore tabs players can open, named the way the DM talks about them. */
+const loreTabs: { section: JournalSection; label: string; blurb: string }[] = [
+  { section: 'campaign', label: 'Story', blurb: 'Chapters, last session and artifacts' },
+  { section: 'places', label: 'Locations', blurb: 'Towns, ruins and rumours' },
+  { section: 'hero', label: 'Characters', blurb: 'The party and faces in the vale' },
+  { section: 'events', label: 'Events', blurb: 'What has moved the story forward' },
+  { section: 'lore', label: 'Backstory', blurb: 'Appearance, personality and the blight' },
+];
 
 export default function DmCampaignScreen() {
   const router = useRouter();
@@ -35,6 +45,28 @@ export default function DmCampaignScreen() {
       <PaperCard label="Invite code">
         <Text style={styles.code}>{item.code}</Text>
         <Text style={styles.body}>Players enter this code on the join screen to sit at your table.</Text>
+      </PaperCard>
+
+      <PaperCard label="Lore the players see">
+        {loreTabs.map((tab, index) => (
+          <Pressable
+            key={tab.section}
+            onPress={() => router.push(`/journal?section=${tab.section}` as never)}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${tab.label}`}
+            style={({ pressed }) => [
+              styles.loreRow,
+              index === loreTabs.length - 1 && styles.loreRowLast,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={styles.loreBody}>
+              <Text style={styles.loreTitle}>{tab.label}</Text>
+              <Text style={styles.loreBlurb}>{tab.blurb}</Text>
+            </View>
+            <Text style={styles.loreChevron}>›</Text>
+          </Pressable>
+        ))}
       </PaperCard>
 
       <PaperCard label="The table">
@@ -81,5 +113,41 @@ const styles = StyleSheet.create({
   },
   gap: {
     marginTop: 6,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  loreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSoft,
+  },
+  loreRowLast: {
+    borderBottomWidth: 0,
+  },
+  loreBody: {
+    flex: 1,
+  },
+  loreTitle: {
+    fontFamily: fonts.display,
+    fontSize: 19,
+    lineHeight: 22,
+    color: colors.ink,
+  },
+  loreBlurb: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.muted,
+  },
+  loreChevron: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 24,
+    color: colors.ink,
+    opacity: 0.6,
   },
 });
