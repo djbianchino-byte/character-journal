@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PaperScreen } from '../components/PaperScreen';
-import { useCampaigns } from '../data/campaignList';
+import { useCampaigns, type CampaignSummary } from '../data/campaignList';
 import { colors, fonts, paperShadow, radius } from '../theme';
 
 export default function CampaignsScreen() {
@@ -12,25 +12,12 @@ export default function CampaignsScreen() {
   return (
     <PaperScreen kicker="Choose a table" title="Your campaigns">
       {campaigns.map(item => (
-        <Pressable
+        <CampaignCard
           key={item.id}
-          onPress={() => router.push('/character' as never)}
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${item.title}`}
-          style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-        >
-          <View style={styles.cardBody}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardMeta}>
-              GM {item.gameMaster} · {item.playerCount} {item.playerCount === 1 ? 'player' : 'players'}
-            </Text>
-            <Text style={styles.cardText} numberOfLines={3}>
-              {item.description}
-            </Text>
-            <Text style={styles.cardNext}>Next session · {item.nextSession}</Text>
-          </View>
-          <Text style={styles.chevron}>›</Text>
-        </Pressable>
+          item={item}
+          onPlay={() => router.push('/character' as never)}
+          onRunAsDm={() => router.push(`/dm/${item.id}` as never)}
+        />
       ))}
 
       <Pressable
@@ -45,11 +32,55 @@ export default function CampaignsScreen() {
   );
 }
 
+type CardProps = {
+  item: CampaignSummary;
+  onPlay: () => void;
+  onRunAsDm: () => void;
+};
+
+function CampaignCard({ item, onPlay, onRunAsDm }: CardProps) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.titleRow}>
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        {item.role === 'dm' ? (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>DM</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={styles.cardMeta}>
+        GM {item.gameMaster} · {item.playerCount} {item.playerCount === 1 ? 'player' : 'players'}
+      </Text>
+      <Text style={styles.cardText} numberOfLines={3}>
+        {item.description}
+      </Text>
+      <Text style={styles.cardNext}>Next session · {item.nextSession}</Text>
+
+      <View style={styles.actions}>
+        <Pressable
+          onPress={onPlay}
+          accessibilityRole="button"
+          accessibilityLabel={`Play ${item.title}`}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <Text style={styles.actionText}>Play</Text>
+        </Pressable>
+        <Pressable
+          onPress={onRunAsDm}
+          accessibilityRole="button"
+          accessibilityLabel={`Run ${item.title} as DM`}
+          style={({ pressed }) => [styles.actionPrimary, pressed && styles.pressed]}
+        >
+          <Text style={styles.actionPrimaryText}>Run as DM</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
     padding: 16,
     backgroundColor: colors.card,
     borderWidth: 1,
@@ -60,14 +91,33 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.75,
   },
-  cardBody: {
-    flex: 1,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   cardTitle: {
+    flex: 1,
     fontFamily: fonts.display,
     fontSize: 24,
     lineHeight: 27,
     color: colors.ink,
+  },
+  badge: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: colors.green,
+  },
+  badgeText: {
+    fontFamily: fonts.body,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: 1.2,
+    color: colors.goldLight,
   },
   cardMeta: {
     fontFamily: fonts.body,
@@ -90,16 +140,30 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginTop: 8,
   },
-  chevron: {
-    fontFamily: fonts.display,
-    fontSize: 28,
-    lineHeight: 30,
-    color: colors.ink,
-    opacity: 0.6,
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
   },
-  addButton: {
-    height: 50,
-    marginTop: 4,
+  action: {
+    flex: 1,
+    height: 40,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.parchmentLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionText: {
+    fontFamily: fonts.display,
+    fontSize: 17,
+    lineHeight: 20,
+    color: colors.ink,
+  },
+  actionPrimary: {
+    flex: 1,
+    height: 40,
     borderRadius: radius.card,
     borderWidth: 1,
     borderColor: '#1c2a17',
@@ -107,10 +171,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  actionPrimaryText: {
+    fontFamily: fonts.display,
+    fontSize: 17,
+    lineHeight: 20,
+    color: colors.goldLight,
+  },
+  addButton: {
+    height: 50,
+    marginTop: 4,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   addText: {
     fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 22,
-    color: colors.goldLight,
+    fontSize: 18,
+    lineHeight: 21,
+    color: colors.ink,
   },
 });

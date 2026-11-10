@@ -137,11 +137,50 @@ export default function JoinScreen() {
           ) : null}
         </View>
       )}
+
+      <View style={styles.branch}>
+        <Text style={styles.branchText}>Running the table yourself?</Text>
+        <Pressable
+          onPress={() => router.push('/create' as never)}
+          accessibilityRole="button"
+          accessibilityLabel="Create a campaign as DM"
+          style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}
+        >
+          <Text style={styles.secondaryText}>Create a campaign as DM</Text>
+        </Pressable>
+      </View>
     </PaperScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  branch: {
+    marginTop: 8,
+    alignItems: 'center',
+    gap: 8,
+  },
+  branchText: {
+    fontFamily: fonts.displayItalic,
+    fontSize: 14,
+    lineHeight: 18,
+    color: colors.muted,
+  },
+  secondary: {
+    height: 46,
+    alignSelf: 'stretch',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryText: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    lineHeight: 21,
+    color: colors.ink,
+  },
   segment: {
     flexDirection: 'row',
     borderWidth: 1,
