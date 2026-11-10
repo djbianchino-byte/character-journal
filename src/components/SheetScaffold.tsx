@@ -119,7 +119,9 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
                     icon={pouchIcon}
                     label="Open inventory"
                     active={active === 'inventory'}
-                    onPress={() => router.push('/inventory' as never)}
+                    onPress={() =>
+                      active === 'inventory' ? router.replace('/character' as never) : router.push('/inventory' as never)
+                    }
                   />
                 </View>
 
