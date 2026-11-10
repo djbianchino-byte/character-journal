@@ -53,7 +53,7 @@ function seedEntities(): DmEntity[] {
     facts: place.known,
     initial: place.initial,
     tint: place.tint,
-    pinned: index === 0,
+    pinned: false,
   }));
 
   const characters: DmEntity[] = campaign.npcs.map(npc => ({
@@ -80,7 +80,8 @@ function seedEntities(): DmEntity[] {
     pinned: false,
   }));
 
-  const items: DmEntity[] = campaign.artifacts.map((artifact, index) => ({
+  // Artifacts appear on the story page, so they start revealed to players.
+  const items: DmEntity[] = campaign.artifacts.map(artifact => ({
     id: `item-${artifact.id}`,
     kind: 'item',
     title: artifact.name,
@@ -89,7 +90,7 @@ function seedEntities(): DmEntity[] {
     facts: [],
     initial: artifact.initial,
     tint: kindTints.item,
-    pinned: index === 0,
+    pinned: true,
   }));
 
   const chapters: DmEntity[] = campaign.story.map((chapter, index) => ({
@@ -101,7 +102,7 @@ function seedEntities(): DmEntity[] {
     facts: [],
     initial: initialFor(chapter.title),
     tint: kindTints.story,
-    pinned: false,
+    pinned: true,
   }));
 
   const lastSession: DmEntity = {
@@ -109,11 +110,14 @@ function seedEntities(): DmEntity[] {
     kind: 'story',
     title: campaign.lastSession.title,
     subtitle: campaign.lastSession.date,
-    body: campaign.lastSession.recap.join('\n\n'),
+    body: [
+      `Present: ${campaign.lastSession.attendance.join(' · ')}`,
+      ...campaign.lastSession.recap,
+    ].join('\n\n'),
     facts: campaign.lastSession.loot,
     initial: initialFor(campaign.lastSession.title),
     tint: kindTints.story,
-    pinned: false,
+    pinned: true,
   };
 
   return [...locations, ...characters, ...events, ...items, ...chapters, lastSession];
@@ -164,7 +168,8 @@ export function addEntity(
         facts: [],
         initial: initialFor(title),
         tint: kindTints[input.kind],
-        pinned: false,
+        // Story details are written on the story page, so they are revealed by default.
+        pinned: input.kind === 'story',
       },
     ],
   });

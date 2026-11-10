@@ -1,31 +1,34 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { CampaignLocation } from '../data/campaign';
 import { colors, fonts, paperShadow, radius } from '../theme';
 
 type Props = {
-  location: CampaignLocation;
+  title: string;
+  subtitle: string;
+  summary: string;
+  initial: string;
+  tint: string;
   onPress: () => void;
 };
 
 /** Location entry in the journal's Places tab. */
-export function LocationCard({ location, onPress }: Props) {
+export function LocationCard({ title, subtitle, summary, initial, tint, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${location.name}, ${location.region}`}
+      accessibilityLabel={`${title}${subtitle ? `, ${subtitle}` : ''}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      <View style={[styles.medallion, { backgroundColor: location.tint }]}>
-        <Text style={styles.initial}>{location.initial}</Text>
+      <View style={[styles.medallion, { backgroundColor: tint }]}>
+        <Text style={styles.initial}>{initial}</Text>
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.name}>{location.name}</Text>
-        <Text style={styles.region}>{location.region}</Text>
+        <Text style={styles.name}>{title}</Text>
+        {subtitle ? <Text style={styles.region}>{subtitle}</Text> : null}
         <Text style={styles.summary} numberOfLines={3}>
-          {location.summary}
+          {summary}
         </Text>
       </View>
 

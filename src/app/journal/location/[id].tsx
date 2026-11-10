@@ -1,60 +1,65 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { InfoRow, Kicker, PaperCard } from '../../../components/PaperCard';
+import { Kicker, PaperCard } from '../../../components/PaperCard';
 import { SheetScaffold } from '../../../components/SheetScaffold';
 import { campaign } from '../../../data/campaign';
+import { useDm } from '../../../data/dmStore';
 import { colors, fonts } from '../../../theme';
 
 export default function LocationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const location = campaign.locations.find(entry => entry.id === id);
+  const dm = useDm(campaign.id);
+  const place = dm.entities.find(entry => entry.id === id && entry.kind === 'location' && entry.pinned);
 
-  if (!location) {
+  if (!place) {
     return (
-      <SheetScaffold>
+      <SheetScaffold journalSection="places">
         <PaperCard title="Place not found">
           <Text style={styles.body}>
-            This page is missing from the journal. Return to the Places tab and choose another entry.
+            This place has not been shared yet. Return to the Places tab and choose another entry.
           </Text>
         </PaperCard>
       </SheetScaffold>
     );
   }
 
+  const [summary, ...rest] = place.body.split('\n\n');
+
   return (
     <SheetScaffold journalSection="places">
       <View style={styles.head}>
-        <View style={[styles.medallion, { backgroundColor: location.tint }]}>
-          <Text style={styles.initial}>{location.initial}</Text>
+        <View style={[styles.medallion, { backgroundColor: place.tint }]}>
+          <Text style={styles.initial}>{place.initial}</Text>
         </View>
         <View style={styles.headText}>
-          <Kicker>{location.region}</Kicker>
-          <Text style={styles.title}>{location.name}</Text>
+          <Kicker>{place.subtitle}</Kicker>
+          <Text style={styles.title}>{place.title}</Text>
         </View>
       </View>
 
       <PaperCard label="The place">
-        <Text style={styles.lead}>{location.summary}</Text>
-        <Text style={styles.body}>{location.detail}</Text>
-      </PaperCard>
-
-      <PaperCard label="What we know" style={styles.gap}>
-        {location.known.map((fact, index) => (
-          <View
-            key={fact}
-            style={[styles.factRow, index === location.known.length - 1 && styles.factRowLast]}
-          >
-            <Text style={styles.bullet}>◆</Text>
-            <Text style={styles.fact}>{fact}</Text>
-          </View>
+        <Text style={styles.lead}>{summary}</Text>
+        {rest.map((paragraph, index) => (
+          <Text key={index} style={styles.body}>
+            {paragraph}
+          </Text>
         ))}
       </PaperCard>
 
-      <PaperCard label="At a glance" style={styles.gap}>
-        <InfoRow label="Region" value={location.region} />
-        <InfoRow label="Status" value={location.featured ? 'Visited' : 'Rumoured'} last />
-      </PaperCard>
+      {place.facts.length > 0 ? (
+        <PaperCard label="What we know" style={styles.gap}>
+          {place.facts.map((fact, index) => (
+            <View
+              key={fact}
+              style={[styles.factRow, index === place.facts.length - 1 && styles.factRowLast]}
+            >
+              <Text style={styles.bullet}>◆</Text>
+              <Text style={styles.fact}>{fact}</Text>
+            </View>
+          ))}
+        </PaperCard>
+      ) : null}
     </SheetScaffold>
   );
 }
@@ -102,6 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     lineHeight: 19,
     color: colors.ink,
+    marginTop: 6,
   },
   gap: {
     marginTop: 11,

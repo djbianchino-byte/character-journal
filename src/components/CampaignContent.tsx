@@ -1,7 +1,8 @@
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { campaign, type CampaignLocation } from '../data/campaign';
+import { campaign } from '../data/campaign';
 import { character } from '../data/character';
+import { useDm, type DmEntity } from '../data/dmStore';
 import { updateLore, useLore } from '../data/loreStore';
 import { colors, fonts } from '../theme';
 import { EditableCard, type EditableField } from './EditableCard';
@@ -27,8 +28,32 @@ const personalityFields: EditableField[] = [
   { key: 'flaws', label: 'Flaws', multiline: true },
 ];
 
-/** Next session, last session, story chapters and artifacts. */
+/** Entries the DM has pinned, so players can see them, of one kind. */
+function useRevealed(kind: DmEntity['kind']) {
+  const dm = useDm(campaign.id);
+  return dm.entities.filter(entity => entity.pinned && entity.kind === kind);
+}
+
+function Paragraphs({ text, style }: { text: string; style?: object }) {
+  return (
+    <>
+      {text
+        .split('\n\n')
+        .filter(paragraph => paragraph.trim().length > 0)
+        .map((paragraph, index) => (
+          <Text key={index} style={[styles.paragraph, index > 0 && styles.paragraphGap, style]}>
+            {paragraph}
+          </Text>
+        ))}
+    </>
+  );
+}
+
+/** The campaign page: the next session, then whatever the DM has revealed on the story page. */
 export function StorySection() {
+  const story = useRevealed('story');
+  const artifacts = useRevealed('item');
+
   return (
     <View>
       <PaperCard>
@@ -46,58 +71,52 @@ export function StorySection() {
         </View>
       </PaperCard>
 
-      <PaperCard label="Last session" title={campaign.lastSession.title} style={styles.gap}>
-        <Text style={styles.sessionDate}>{campaign.lastSession.date}</Text>
-        <Text style={styles.attendance}>Present: {campaign.lastSession.attendance.join(' · ')}</Text>
-        <View style={styles.rule} />
-        {campaign.lastSession.recap.map((line, index) => (
-          <Text key={index} style={styles.paragraph}>
-            {line}
-          </Text>
-        ))}
-        <Text style={styles.lootLabel}>Loot recovered</Text>
-        <Text style={styles.loot}>{campaign.lastSession.loot.join(' · ')}</Text>
-      </PaperCard>
-
-      {campaign.story.map(chapter => (
-        <PaperCard key={chapter.title} title={chapter.title} style={styles.gap}>
-          <Text style={styles.paragraph}>{chapter.body}</Text>
+      {story.map(entry => (
+        <PaperCard key={entry.id} label={entry.subtitle || 'Story'} title={entry.title} style={styles.gap}>
+          <Paragraphs text={entry.body} />
+          {entry.facts.length > 0 ? (
+            <View style={styles.factsBlock}>
+              <Text style={styles.lootLabel}>Loot recovered</Text>
+              <Text style={styles.loot}>{entry.facts.join(' · ')}</Text>
+            </View>
+          ) : null}
         </PaperCard>
       ))}
 
-      {campaign.artifacts.map((artifact, index) => (
-        <PaperCard key={artifact.id} label={artifact.kind} title={artifact.name} style={styles.gap}>
+      {artifacts.map((artifact, index) => (
+        <PaperCard key={artifact.id} label={artifact.subtitle} title={artifact.title} style={styles.gap}>
           <View style={styles.artifactHead}>
-            <View
-              style={[
-                styles.artifactMedallion,
-                { backgroundColor: artifactTints[index % artifactTints.length] },
-              ]}
-            >
+            <View style={[styles.artifactMedallion, { backgroundColor: artifactTints[index % artifactTints.length] }]}>
               <Text style={styles.artifactInitial}>{artifact.initial}</Text>
             </View>
-            <Text style={styles.artifactSummary}>{artifact.summary}</Text>
           </View>
-          <Text style={styles.paragraph}>{artifact.detail}</Text>
+          <Paragraphs text={artifact.body} />
         </PaperCard>
       ))}
+
+      {story.length === 0 && artifacts.length === 0 ? (
+        <Text style={[styles.tabBlurb, styles.gap]}>The story has not been shared yet.</Text>
+      ) : null}
     </View>
   );
 }
 
-/** Every event that has moved the story forward. */
+/** Events the DM has revealed, newest first as the DM ordered them. */
 export function EventsSection() {
+  const events = useRevealed('event');
+
   return (
     <View>
-      <Text style={styles.tabBlurb}>Everything that has moved the story forward, newest first.</Text>
-      {campaign.events.map((event, index) => (
+      <Text style={styles.tabBlurb}>Everything that has moved the story forward.</Text>
+      {events.length === 0 ? <Text style={styles.tabBlurb}>No events have been revealed yet.</Text> : null}
+      {events.map((event, index) => (
         <PaperCard
           key={event.id}
-          label={event.when}
+          label={event.subtitle}
           title={event.title}
           style={index > 0 ? styles.gap : undefined}
         >
-          <Text style={styles.paragraph}>{event.summary}</Text>
+          <Paragraphs text={event.body} />
         </PaperCard>
       ))}
     </View>
@@ -105,40 +124,28 @@ export function EventsSection() {
 }
 
 type PlacesProps = {
-  onOpen: (location: CampaignLocation) => void;
+  onOpen: (location: DmEntity) => void;
 };
 
-/** Places the party has visited, or heard whispered about. */
+/** Places the DM has revealed. */
 export function PlacesSection({ onOpen }: PlacesProps) {
+  const places = useRevealed('location');
+
   return (
     <View>
       <Text style={styles.tabBlurb}>Places the party has visited, or heard whispered about.</Text>
-      {campaign.locations.map(location => (
-        <LocationCard key={location.id} location={location} onPress={() => onOpen(location)} />
+      {places.length === 0 ? <Text style={styles.tabBlurb}>No places have been revealed yet.</Text> : null}
+      {places.map(place => (
+        <LocationCard
+          key={place.id}
+          title={place.title}
+          subtitle={place.subtitle}
+          summary={place.body.split('\n\n')[0] ?? ''}
+          initial={place.initial}
+          tint={place.tint}
+          onPress={() => onOpen(place)}
+        />
       ))}
-    </View>
-  );
-}
-
-/** Full write-up of one place, with what the party knows. */
-export function LocationDetail({ location }: { location: CampaignLocation }) {
-  return (
-    <View>
-      <PaperCard label={location.region} title={location.name} style={styles.gap}>
-        <Text style={styles.lead}>{location.summary}</Text>
-        <Text style={styles.paragraph}>{location.detail}</Text>
-      </PaperCard>
-      <PaperCard label="What we know" style={styles.gap}>
-        {location.known.map((fact, index) => (
-          <View
-            key={fact}
-            style={[styles.factRow, index === location.known.length - 1 && styles.factRowLast]}
-          >
-            <Text style={styles.bullet}>◆</Text>
-            <Text style={styles.fact}>{fact}</Text>
-          </View>
-        ))}
-      </PaperCard>
     </View>
   );
 }
@@ -149,8 +156,10 @@ type CharactersProps = {
   onOpen: (player: PartyMember) => void;
 };
 
-/** The party and the faces in the vale. */
+/** The party, and the characters the DM has revealed. */
 export function CharactersSection({ onOpen }: CharactersProps) {
+  const characters = useRevealed('character');
+
   return (
     <PaperCard label="The party">
       {campaign.roster.map(player => (
@@ -165,15 +174,15 @@ export function CharactersSection({ onOpen }: CharactersProps) {
         />
       ))}
 
-      <Text style={styles.npcLabel}>Faces in the vale</Text>
-      {campaign.npcs.map(npc => (
+      {characters.length > 0 ? <Text style={styles.npcLabel}>Faces in the vale</Text> : null}
+      {characters.map(npc => (
         <PartyRow
           key={npc.id}
-          name={npc.name}
+          name={npc.title}
           initial={npc.initial}
-          meta={npc.role}
+          meta={npc.subtitle}
           tint={npc.tint}
-          onPress={() => Alert.alert(npc.name, npc.role)}
+          onPress={() => Alert.alert(npc.title, npc.subtitle)}
         />
       ))}
     </PaperCard>
@@ -297,24 +306,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: colors.inkSoft,
   },
-  sessionDate: {
-    fontFamily: fonts.displayItalic,
-    fontSize: 15,
-    lineHeight: 19,
-    color: colors.muted,
-  },
-  attendance: {
-    fontFamily: fonts.body,
-    fontSize: 11.5,
-    lineHeight: 16,
-    color: colors.inkSoft,
-    marginTop: 2,
-  },
-  rule: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.borderSoft,
-    marginVertical: 10,
-  },
   paragraph: {
     fontFamily: fonts.body,
     fontSize: 13.5,
@@ -322,8 +313,13 @@ const styles = StyleSheet.create({
     color: colors.ink,
     marginTop: 4,
   },
+  paragraphGap: {
+    marginTop: 8,
+  },
+  factsBlock: {
+    marginTop: 10,
+  },
   lootLabel: {
-    marginTop: 11,
     fontFamily: fonts.body,
     fontSize: 9,
     lineHeight: 12,
@@ -342,7 +338,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   artifactMedallion: {
     width: 40,
@@ -358,42 +354,5 @@ const styles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 21,
     color: colors.cream,
-  },
-  artifactSummary: {
-    flex: 1,
-    fontFamily: fonts.displayItalic,
-    fontSize: 14,
-    lineHeight: 18,
-    color: colors.muted,
-  },
-  lead: {
-    fontFamily: fonts.displayItalic,
-    fontSize: 15,
-    lineHeight: 20,
-    color: colors.muted,
-    marginBottom: 7,
-  },
-  factRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 9,
-    paddingVertical: 7,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.borderSoft,
-  },
-  factRowLast: {
-    borderBottomWidth: 0,
-  },
-  bullet: {
-    fontSize: 6,
-    color: colors.goldDark,
-    marginTop: 6,
-  },
-  fact: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: colors.ink,
   },
 });
