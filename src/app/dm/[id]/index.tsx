@@ -22,10 +22,10 @@ import {
 } from '../../../data/dmStore';
 import { colors, fonts } from '../../../theme';
 
-type DmTab = 'story' | 'locations' | 'characters' | 'events' | 'items';
+type DmTab = 'campaign' | 'locations' | 'characters' | 'events' | 'items';
 
 const tabs: TabItem<DmTab>[] = [
-  { key: 'story', label: 'Story' },
+  { key: 'campaign', label: 'Campaign' },
   { key: 'locations', label: 'Locations' },
   { key: 'characters', label: 'Characters' },
   { key: 'events', label: 'Events' },
@@ -45,9 +45,10 @@ export default function DmCampaignScreen() {
   const campaigns = useCampaigns();
   const item = campaigns.find(entry => entry.id === id);
   const dm = useDm(id);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
   const [pinning, setPinning] = useState(false);
 
-  const active: DmTab = tabs.some(entry => entry.key === tab) ? (tab as DmTab) : 'story';
+  const active: DmTab = tabs.some(entry => entry.key === tab) ? (tab as DmTab) : 'campaign';
 
   function leave() {
     if (router.canGoBack()) {
@@ -94,7 +95,87 @@ export default function DmCampaignScreen() {
 
   return (
     <PaperScreen kicker="Dungeon master" title={item.title} onBack={leave}>
-      <PaperCard label="Invite code">
+      <PaperCard>
+        <View style={styles.pinnedHead}>
+          <Pressable
+            onPress={() => setPinnedOpen(open => !open)}
+            accessibilityRole="button"
+            accessibilityLabel="Pinned to campaign"
+            accessibilityState={{ expanded: pinnedOpen }}
+            style={styles.pinnedTitle}
+          >
+            <Text style={styles.pinnedLabel}>Pinned to campaign · {pinned.length}</Text>
+            <Text style={styles.chevron}>{pinnedOpen ? '▾' : '▸'}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              setPinnedOpen(true);
+              setPinning(current => !current);
+            }}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={pinning ? 'Done pinning' : 'Pin something to campaign'}
+          >
+            <Text style={styles.pinnedToggle}>{pinning ? 'Done' : '+ Pin'}</Text>
+          </Pressable>
+        </View>
+
+        {pinnedOpen ? (
+          <View>
+            {pinned.length === 0 ? (
+              <Text style={styles.empty}>
+                Nothing is pinned yet. Pin a location, character, event, item or story detail to reveal it to players.
+              </Text>
+            ) : (
+              pinned.map((entity, index) => (
+                <View key={entity.id} style={[styles.pinRow, index === pinned.length - 1 && styles.pinRowLast]}>
+                  <Pressable
+                    onPress={() => openEntity(entity)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${entity.title}`}
+                    style={styles.pinOpen}
+                  >
+                    <Text style={styles.pinKind}>{entityKindLabels[entity.kind]}</Text>
+                    <Text style={styles.pinTitle}>{entity.title}</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => togglePin(campaignId, entity.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Unpin ${entity.title}`}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.unpin}>Unpin</Text>
+                  </Pressable>
+                </View>
+              ))
+            )}
+
+            {pinning ? (
+              unpinned.length === 0 ? (
+                <Text style={styles.empty}>Everything is already pinned.</Text>
+              ) : (
+                unpinned.map((entity, index) => (
+                  <Pressable
+                    key={entity.id}
+                    onPress={() => togglePin(campaignId, entity.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Pin ${entity.title}`}
+                    style={[styles.pinRow, index === unpinned.length - 1 && styles.pinRowLast]}
+                  >
+                    <View style={styles.pinOpen}>
+                      <Text style={styles.pinKind}>{entityKindLabels[entity.kind]}</Text>
+                      <Text style={styles.pinTitle}>{entity.title}</Text>
+                    </View>
+                    <Text style={styles.pinAction}>Pin</Text>
+                  </Pressable>
+                ))
+              )
+            ) : null}
+          </View>
+        ) : null}
+      </PaperCard>
+
+      <PaperCard label="Invite code" style={styles.gap}>
         <Text style={styles.code}>{item.code}</Text>
         <Text style={styles.body}>Players enter this code on the join screen to sit at your table.</Text>
       </PaperCard>
@@ -111,75 +192,11 @@ export default function DmCampaignScreen() {
         />
       </PaperCard>
 
-      <PaperCard style={styles.gap}>
-        <View style={styles.pinnedHead}>
-          <Text style={styles.pinnedLabel}>Pinned to home</Text>
-          <Pressable
-            onPress={() => setPinning(current => !current)}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={pinning ? 'Done pinning' : 'Pin something to home'}
-          >
-            <Text style={styles.pinnedToggle}>{pinning ? 'Done' : '+ Pin'}</Text>
-          </Pressable>
-        </View>
-
-        {pinned.length === 0 ? (
-          <Text style={styles.empty}>
-            Nothing is pinned yet. Pin a location, character, event, item or story detail to keep it here.
-          </Text>
-        ) : (
-          pinned.map((entity, index) => (
-            <View key={entity.id} style={[styles.pinRow, index === pinned.length - 1 && styles.pinRowLast]}>
-              <Pressable
-                onPress={() => openEntity(entity)}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${entity.title}`}
-                style={styles.pinOpen}
-              >
-                <Text style={styles.pinKind}>{entityKindLabels[entity.kind]}</Text>
-                <Text style={styles.pinTitle}>{entity.title}</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => togglePin(campaignId, entity.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Unpin ${entity.title}`}
-                hitSlop={8}
-              >
-                <Text style={styles.unpin}>Unpin</Text>
-              </Pressable>
-            </View>
-          ))
-        )}
-
-        {pinning ? (
-          unpinned.length === 0 ? (
-            <Text style={styles.empty}>Everything is already pinned.</Text>
-          ) : (
-            unpinned.map((entity, index) => (
-              <Pressable
-                key={entity.id}
-                onPress={() => togglePin(campaignId, entity.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Pin ${entity.title}`}
-                style={[styles.pinRow, index === unpinned.length - 1 && styles.pinRowLast]}
-              >
-                <View style={styles.pinOpen}>
-                  <Text style={styles.pinKind}>{entityKindLabels[entity.kind]}</Text>
-                  <Text style={styles.pinTitle}>{entity.title}</Text>
-                </View>
-                <Text style={styles.pinAction}>Pin</Text>
-              </Pressable>
-            ))
-          )
-        ) : null}
-      </PaperCard>
-
       <View style={styles.gap}>
         <TabRow tabs={tabs} active={active} onChange={changeTab} />
       </View>
 
-      {active === 'story' ? (
+      {active === 'campaign' ? (
         <View>
           <PaperCard label="The table">
             <InfoRow label="Game master" value="You" />
@@ -303,7 +320,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+  },
+  pinnedTitle: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   pinnedLabel: {
     fontFamily: fonts.body,
@@ -312,6 +334,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
     textTransform: 'uppercase',
     color: colors.ink,
+  },
+  chevron: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.muted,
   },
   pinnedToggle: {
     fontFamily: fonts.body,
@@ -327,6 +354,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     paddingVertical: 8,
+    marginTop: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderSoft,
   },
