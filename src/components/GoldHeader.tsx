@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { profileClassLine, useProfile } from '../data/profileStore';
 import { colors, fonts, HEADER_HEIGHT } from '../theme';
@@ -9,15 +9,60 @@ const handIcon = require('../../assets/ui/hand.png');
 const quillIcon = require('../../assets/ui/icon-quill.png');
 const portrait = require('../../assets/ui/portrait-garyth.jpg');
 
-/** Long names wrap onto more lines, so they step down in size to stay inside the banner. */
-function nameStyle(name: string) {
-  if (name.length > 24) {
-    return { fontSize: 26, lineHeight: 27 };
+const NAME_MIN = 24;
+const NAME_SIZES = [36, 34, 32, 30, 28, 26, 24];
+/** Average width of a character in the display face, as a share of its font size. */
+const CHAR_WIDTH = 0.46;
+
+/** Estimates how many lines a name wraps to at a given size and width. */
+function estimateLines(name: string, size: number, width: number) {
+  const perLine = Math.max(1, Math.floor(width / (CHAR_WIDTH * size)));
+  let lines = 1;
+  let current = 0;
+  for (const word of name.split(' ')) {
+    const length = word.length;
+    if (current === 0) {
+      current = length;
+    } else if (current + 1 + length <= perLine) {
+      current += 1 + length;
+    } else {
+      lines += 1;
+      current = length;
+    }
+    while (current > perLine) {
+      lines += 1;
+      current -= perLine;
+    }
   }
-  if (name.length > 16) {
-    return { fontSize: 30, lineHeight: 31 };
+  return lines;
+}
+
+/**
+ * Full size while the name fits on two lines, smaller if it needs three.
+ * Anything past the third line is cut off.
+ */
+function nameSizeFor(name: string, width: number) {
+  const twoLines = NAME_SIZES.find(size => estimateLines(name, size, width) <= 2);
+  if (twoLines) {
+    return { size: twoLines, capped: false };
   }
-  return undefined;
+  const threeLines = NAME_SIZES.find(size => estimateLines(name, size, width) <= 3);
+  if (threeLines) {
+    return { size: threeLines, capped: false };
+  }
+  return { size: NAME_MIN, capped: true };
+}
+
+function NameText({ name, width }: { name: string; width: number }) {
+  const { size, capped } = nameSizeFor(name, width);
+  return (
+    <Text
+      numberOfLines={capped ? 3 : undefined}
+      style={[styles.name, { fontSize: size, lineHeight: size + 1 }]}
+    >
+      {name}
+    </Text>
+  );
 }
 
 type Props = {
@@ -30,6 +75,9 @@ type Props = {
 export function GoldHeader({ showBack = true, onBack, onEdit }: Props) {
   const router = useRouter();
   const profile = useProfile();
+  const { width: windowWidth } = useWindowDimensions();
+  // Banner width less the horizontal padding and the portrait column.
+  const nameWidth = Math.min(windowWidth, 390) - 48 - 112;
 
   function edit() {
     if (onEdit) {
@@ -87,7 +135,7 @@ export function GoldHeader({ showBack = true, onBack, onEdit }: Props) {
           accessibilityLabel="Edit name, class and level"
           style={styles.identity}
         >
-          <Text style={[styles.name, nameStyle(profile.name)]}>{profile.name}</Text>
+          <NameText name={profile.name} width={nameWidth} />
           <Text numberOfLines={1} style={styles.classLine}>
             {profileClassLine(profile)}
           </Text>
