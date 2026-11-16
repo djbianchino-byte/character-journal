@@ -59,7 +59,7 @@ export default function DiceScreen() {
   function roll() {
     const next = rollExpression(selected);
     setResult(next);
-    setHistory(current => [`${next.total} (${selected})`, ...current].slice(0, 4));
+    setHistory(current => [String(next.total), ...current].slice(0, 4));
   }
 
   return (
