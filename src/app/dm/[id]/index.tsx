@@ -71,7 +71,6 @@ export default function DmCampaignScreen() {
   const hasParty = campaignId === campaign.id;
   const pinned = dm.entities.filter(entry => entry.pinned);
   const unpinned = dm.entities.filter(entry => !entry.pinned);
-  const campaignEvents = dm.entities.filter(entry => entry.kind === 'event' && entry.pinned);
 
   function changeTab(next: DmTab) {
     setPinning(false);
@@ -202,10 +201,10 @@ export default function DmCampaignScreen() {
           </PaperCard>
 
           <View style={styles.gap}>
-            {campaignEvents.length === 0 ? (
-              <Text style={styles.empty}>No events are pinned to the campaign yet.</Text>
+            {pinned.length === 0 ? (
+              <Text style={styles.empty}>Nothing is pinned to the campaign yet.</Text>
             ) : (
-              campaignEvents.map(entity => (
+              pinned.map(entity => (
                 <EntityCard
                   key={entity.id}
                   entity={entity}
@@ -214,7 +213,13 @@ export default function DmCampaignScreen() {
                 />
               ))
             )}
-            <AddButton label="+ Add event" onPress={() => addNew('event', true)} />
+            <View style={styles.addGrid}>
+              {(['location', 'character', 'event', 'item'] as EntityKind[]).map(kind => (
+                <View key={kind} style={styles.addCell}>
+                  <AddButton label={`+ ${entityKindLabels[kind]}`} onPress={() => addNew(kind, true)} />
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       ) : null}
@@ -262,6 +267,14 @@ export default function DmCampaignScreen() {
 }
 
 const styles = StyleSheet.create({
+  addGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  addCell: {
+    width: '48%',
+  },
   code: {
     fontFamily: fonts.numeral,
     fontSize: 34,

@@ -86,8 +86,8 @@ function seedEntities(): DmEntity[] {
     pinned: false,
   }));
 
-  // The campaign's story (chapters, last session and artifacts) is written as events,
-  // and starts pinned so players see it on their campaign page.
+  // Chapters and the last session are events; artifacts are items. All start pinned
+  // so players see them on their campaign page.
   const chapters: DmEntity[] = campaign.story.map((chapter, index) => ({
     id: `event-chapter-${index}`,
     kind: 'event',
@@ -116,14 +116,14 @@ function seedEntities(): DmEntity[] {
   };
 
   const artifacts: DmEntity[] = campaign.artifacts.map(artifact => ({
-    id: `event-artifact-${artifact.id}`,
-    kind: 'event',
+    id: `item-artifact-${artifact.id}`,
+    kind: 'item',
     title: artifact.name,
     subtitle: artifact.kind,
     body: `${artifact.summary}\n\n${artifact.detail}`,
     facts: [],
     initial: artifact.initial,
-    tint: kindTints.event,
+    tint: kindTints.item,
     pinned: true,
   }));
 

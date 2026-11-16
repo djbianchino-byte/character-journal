@@ -2,7 +2,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { campaign } from '../data/campaign';
 import { character } from '../data/character';
-import { useDm, type DmEntity } from '../data/dmStore';
+import { entityKindLabels, useDm, type DmEntity } from '../data/dmStore';
 import { updateLore, useLore } from '../data/loreStore';
 import { colors, fonts } from '../theme';
 import { EditableCard, type EditableField } from './EditableCard';
@@ -32,6 +32,20 @@ function useRevealed(kind: DmEntity['kind']) {
   return dm.entities.filter(entity => entity.pinned && entity.kind === kind);
 }
 
+/** Everything the DM has pinned, whatever its kind. */
+function usePinned() {
+  const dm = useDm(campaign.id);
+  return dm.entities.filter(entity => entity.pinned);
+}
+
+/** Events show their date; other kinds show their kind, plus any subtitle. */
+function revealedLabel(entry: DmEntity) {
+  if (entry.kind === 'event') {
+    return entry.subtitle || 'Event';
+  }
+  return entry.subtitle ? `${entityKindLabels[entry.kind]} · ${entry.subtitle}` : entityKindLabels[entry.kind];
+}
+
 function Paragraphs({ text }: { text: string }) {
   return (
     <>
@@ -50,7 +64,7 @@ function Paragraphs({ text }: { text: string }) {
 /** One pinned event as players read it. */
 function RevealedEvent({ entry, style }: { entry: DmEntity; style?: object }) {
   return (
-    <PaperCard label={entry.subtitle || 'Event'} title={entry.title} style={style}>
+    <PaperCard label={revealedLabel(entry)} title={entry.title} style={style}>
       <Paragraphs text={entry.body} />
       {entry.facts.length > 0 ? (
         <View style={styles.factsBlock}>
@@ -62,9 +76,9 @@ function RevealedEvent({ entry, style }: { entry: DmEntity; style?: object }) {
   );
 }
 
-/** The campaign page: the next session, then the events the DM has pinned. */
+/** The campaign page: the next session, then everything the DM has pinned. */
 export function StorySection() {
-  const events = useRevealed('event');
+  const events = usePinned();
 
   return (
     <View>
