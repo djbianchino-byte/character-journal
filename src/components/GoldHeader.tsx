@@ -9,6 +9,17 @@ const handIcon = require('../../assets/ui/hand.png');
 const quillIcon = require('../../assets/ui/icon-quill.png');
 const portrait = require('../../assets/ui/portrait-garyth.jpg');
 
+/** Long names wrap onto more lines, so they step down in size to stay inside the banner. */
+function nameStyle(name: string) {
+  if (name.length > 24) {
+    return { fontSize: 26, lineHeight: 27 };
+  }
+  if (name.length > 16) {
+    return { fontSize: 30, lineHeight: 31 };
+  }
+  return undefined;
+}
+
 type Props = {
   showBack?: boolean;
   onBack?: () => void;
@@ -76,9 +87,7 @@ export function GoldHeader({ showBack = true, onBack, onEdit }: Props) {
           accessibilityLabel="Edit name, class and level"
           style={styles.identity}
         >
-          <Text numberOfLines={1} style={styles.name}>
-            {profile.name}
-          </Text>
+          <Text style={[styles.name, nameStyle(profile.name)]}>{profile.name}</Text>
           <Text numberOfLines={1} style={styles.classLine}>
             {profileClassLine(profile)}
           </Text>
