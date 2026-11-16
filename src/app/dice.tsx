@@ -2,7 +2,9 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { campaign } from '../data/campaign';
 import { attacks } from '../data/features';
+import { addEntity } from '../data/dmStore';
 import { colors, fonts, radius } from '../theme';
 
 type RollResult = {
@@ -47,6 +49,7 @@ export default function DiceScreen() {
   const [selected, setSelected] = useState('1d20');
   const [result, setResult] = useState<RollResult | null>(null);
   const [history, setHistory] = useState<string[]>([]);
+  const [savedRoll, setSavedRoll] = useState<RollResult | null>(null);
 
   function close() {
     if (router.canGoBack()) {
@@ -147,7 +150,34 @@ export default function DiceScreen() {
                 {result.rolls.length > 1 ? ` · ${result.rolls.join(' + ')}` : ''}
                 {result.modifier ? ` + ${result.modifier}` : ''}
               </Text>
-              <Text style={styles.resultHint}>Rolled clean. Add it to the story.</Text>
+              <Pressable
+                onPress={() => {
+                  addEntity(
+                    campaign.id,
+                    {
+                      kind: 'event',
+                      title: `${result.dice} rolled ${result.total}`,
+                      subtitle: 'Dice roll',
+                      body: `Rolled ${result.rolls.join(' + ')}${result.modifier ? ` + ${result.modifier}` : ''} = ${result.total}.`,
+                    },
+                    true,
+                  );
+                  setSavedRoll(result);
+                }}
+                disabled={savedRoll === result}
+                accessibilityRole="button"
+                accessibilityLabel="Add roll to the story"
+                accessibilityState={{ disabled: savedRoll === result }}
+                style={({ pressed }) => [
+                  styles.addToStory,
+                  savedRoll === result && styles.addToStoryDone,
+                  pressed && savedRoll !== result && styles.pressed,
+                ]}
+              >
+                <Text style={styles.addToStoryText}>
+                  {savedRoll === result ? 'Added to story' : 'Add to story'}
+                </Text>
+              </Pressable>
             </View>
           </View>
         ) : (
@@ -333,11 +363,27 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.ink,
   },
-  resultHint: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    lineHeight: 13,
-    color: colors.muted,
+  addToStory: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    backgroundColor: colors.green,
+  },
+  addToStoryDone: {
+    backgroundColor: colors.parchmentDeep,
+  },
+  addToStoryText: {
+    fontFamily: fonts.display,
+    fontSize: 13,
+    lineHeight: 16,
+    color: colors.goldLight,
+  },
+  pressed: {
+    opacity: 0.8,
   },
   hint: {
     marginTop: 12,
