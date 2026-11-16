@@ -41,7 +41,7 @@ export default function JournalScreen() {
         <Text style={styles.title}>{campaign.title}</Text>
       </View>
 
-      {current === 'hero' ? (
+      {current === 'party' ? (
         <View>
           <PaperCard label="The character" title={character.name}>
             <Text style={styles.subtitle}>{character.subtitle}</Text>
