@@ -14,6 +14,7 @@ import { SheetScaffold } from '../../components/SheetScaffold';
 import { campaign } from '../../data/campaign';
 import { character } from '../../data/character';
 import { journalSections, type JournalSection } from '../../data/journal';
+import { profileClassLine, useProfile } from '../../data/profileStore';
 import { colors, fonts } from '../../theme';
 
 function resolveSection(value: string | undefined): JournalSection {
@@ -25,6 +26,7 @@ export default function JournalScreen() {
   const router = useRouter();
   const { section } = useLocalSearchParams<{ section?: string }>();
   const current = resolveSection(section);
+  const profile = useProfile();
 
   function openCharacter(player: PartyMember) {
     if (player.isYou) {
@@ -43,9 +45,9 @@ export default function JournalScreen() {
 
       {current === 'party' ? (
         <View>
-          <PaperCard label="The character" title={character.name}>
-            <Text style={styles.subtitle}>{character.subtitle}</Text>
-            <InfoRow label="Level" value={String(character.level)} />
+          <PaperCard label="The character" title={profile.name}>
+            <Text style={styles.subtitle}>{`${profileClassLine(profile)} · played by ${profile.playedBy}`}</Text>
+            <InfoRow label="Level" value={String(profile.level)} />
             <InfoRow label="Armor class" value={String(character.armorClass)} />
             <InfoRow label="Hit points" value={`${character.hp.current} / ${character.hp.max}`} last />
           </PaperCard>

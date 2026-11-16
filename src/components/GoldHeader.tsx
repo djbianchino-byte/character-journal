@@ -1,7 +1,8 @@
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { character } from '../data/character';
+import { profileClassLine, useProfile } from '../data/profileStore';
 import { colors, fonts, HEADER_HEIGHT } from '../theme';
 
 const handIcon = require('../../assets/ui/hand.png');
@@ -16,14 +17,15 @@ type Props = {
 
 /** Gold parchment banner with the character identity, portrait and actions. */
 export function GoldHeader({ showBack = true, onBack, onEdit }: Props) {
-  const [classLine, playedLine] = character.subtitle.split(' · ');
+  const router = useRouter();
+  const profile = useProfile();
 
   function edit() {
     if (onEdit) {
       onEdit();
       return;
     }
-    Alert.alert('Edit character', 'Character editing opens in the full release.');
+    router.push('/profile' as never);
   }
 
   return (
@@ -68,21 +70,35 @@ export function GoldHeader({ showBack = true, onBack, onEdit }: Props) {
       </View>
 
       <View style={styles.summary}>
-        <View style={styles.identity}>
+        <Pressable
+          onPress={edit}
+          accessibilityRole="button"
+          accessibilityLabel="Edit name, class and level"
+          style={styles.identity}
+        >
           <Text numberOfLines={1} style={styles.name}>
-            {character.name}
+            {profile.name}
           </Text>
           <Text numberOfLines={1} style={styles.classLine}>
-            {classLine}
+            {profileClassLine(profile)}
           </Text>
           <Text numberOfLines={1} style={styles.played}>
-            {playedLine}
+            played by {profile.playedBy}
           </Text>
-        </View>
+        </Pressable>
 
-        <View style={styles.portraitFrame}>
-          <Image source={portrait} style={styles.portrait} resizeMode="cover" />
-        </View>
+        <Pressable
+          onPress={edit}
+          accessibilityRole="button"
+          accessibilityLabel="Change profile picture"
+          style={styles.portraitFrame}
+        >
+          <Image
+            source={profile.avatarUri ? { uri: profile.avatarUri } : portrait}
+            style={[styles.portrait, !profile.avatarUri && styles.portraitArt]}
+            resizeMode="cover"
+          />
+        </Pressable>
       </View>
 
       <LinearGradient
@@ -102,14 +118,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   actions: {
-    height: 26,
+    height: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   backButton: {
     width: 40,
-    height: 26,
+    height: 30,
     justifyContent: 'center',
   },
   hand: {
@@ -117,14 +133,14 @@ const styles = StyleSheet.create({
     height: 24,
   },
   editButton: {
-    width: 30,
-    height: 26,
+    width: 44,
+    height: 36,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
   quill: {
-    width: 20,
-    height: 16,
+    width: 34,
+    height: 28,
   },
   summary: {
     flex: 1,
@@ -178,6 +194,10 @@ const styles = StyleSheet.create({
   portrait: {
     width: '100%',
     height: '100%',
+  },
+  // The artwork has a dark frame baked into its edges; zoom it out of view.
+  portraitArt: {
+    transform: [{ scale: 1.16 }],
   },
   fade: {
     position: 'absolute',
