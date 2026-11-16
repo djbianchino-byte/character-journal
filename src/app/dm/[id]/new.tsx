@@ -7,12 +7,16 @@ import { addEntity, entityFieldLabels as fieldLabels, entityKindLabels, type Ent
 import { colors, fonts, paperShadow, radius } from '../../../theme';
 
 function resolveKind(value: string | undefined): EntityKind {
-  return value === 'character' || value === 'event' || value === 'item' || value === 'story' ? value : 'location';
+  return value === 'character' || value === 'event' || value === 'item' ? value : 'location';
 }
 
 export default function NewEntityScreen() {
   const router = useRouter();
-  const { id, kind: kindParam } = useLocalSearchParams<{ id: string; kind?: string }>();
+  const { id, kind: kindParam, pinned: pinnedParam } = useLocalSearchParams<{
+    id: string;
+    kind?: string;
+    pinned?: string;
+  }>();
   const kind = resolveKind(kindParam);
   const labels = fieldLabels[kind];
   const [title, setTitle] = useState('');
@@ -33,7 +37,7 @@ export default function NewEntityScreen() {
     if (!canSave) {
       return;
     }
-    addEntity(id, { kind, title, subtitle, body });
+    addEntity(id, { kind, title, subtitle, body }, pinnedParam === '1');
     leave();
   }
 

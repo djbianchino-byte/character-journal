@@ -438,11 +438,6 @@ const styles = StyleSheet.create({
     bottom: 10,
     width: 72,
     height: 72,
-    shadowColor: '#1c0f02',
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
   },
   dicePressed: {
     opacity: 0.85,

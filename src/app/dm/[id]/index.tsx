@@ -4,10 +4,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AddButton } from '../../../components/AddButton';
 import { EntityCard } from '../../../components/EntityCard';
-import { InfoRow, PaperCard } from '../../../components/PaperCard';
+import { PaperCard } from '../../../components/PaperCard';
 import { PaperScreen } from '../../../components/PaperScreen';
 import { PartyRow } from '../../../components/PartyRow';
-import { StoryCard } from '../../../components/StoryCard';
 import { TabRow, type TabItem } from '../../../components/TabRow';
 import { campaign } from '../../../data/campaign';
 import { useCampaigns } from '../../../data/campaignList';
@@ -15,7 +14,6 @@ import {
   entityKindLabels,
   setSessionLive,
   togglePin,
-  updateEntity,
   useDm,
   type DmEntity,
   type EntityKind,
@@ -73,6 +71,7 @@ export default function DmCampaignScreen() {
   const hasParty = campaignId === campaign.id;
   const pinned = dm.entities.filter(entry => entry.pinned);
   const unpinned = dm.entities.filter(entry => !entry.pinned);
+  const campaignEvents = dm.entities.filter(entry => entry.kind === 'event' && entry.pinned);
 
   function changeTab(next: DmTab) {
     setPinning(false);
@@ -83,8 +82,8 @@ export default function DmCampaignScreen() {
     router.push(`/dm/${campaignId}/entity/${entity.id}` as never);
   }
 
-  function addNew(kind: EntityKind) {
-    router.push(`/dm/${campaignId}/new?kind=${kind}` as never);
+  function addNew(kind: EntityKind, pinnedOnAdd = false) {
+    router.push(`/dm/${campaignId}/new?kind=${kind}${pinnedOnAdd ? '&pinned=1' : ''}` as never);
   }
 
   function listFor(kind: EntityKind) {
@@ -124,7 +123,7 @@ export default function DmCampaignScreen() {
           <View>
             {pinned.length === 0 ? (
               <Text style={styles.empty}>
-                Nothing is pinned yet. Pin a location, character, event, item or story detail to reveal it to players.
+                Nothing is pinned yet. Pin a location, character, event or item to reveal it to players.
               </Text>
             ) : (
               pinned.map((entity, index) => (
@@ -198,38 +197,25 @@ export default function DmCampaignScreen() {
 
       {active === 'campaign' ? (
         <View>
-          <PaperCard label="The table">
-            <InfoRow label="Game master" value="You" />
-            <InfoRow label="Players" value={String(item.playerCount)} last />
+          <PaperCard label="About">
+            <Text style={styles.body}>{item.description}</Text>
           </PaperCard>
 
-          {listFor('story').map(entity => (
-            <View key={entity.id} style={styles.gap}>
-              <StoryCard
-                entity={entity}
-                onTogglePin={() => togglePin(campaignId, entity.id)}
-                onSave={patch => updateEntity(campaignId, entity.id, patch)}
-              />
-            </View>
-          ))}
-
           <View style={styles.gap}>
-            <AddButton label="+ Add detail" onPress={() => addNew('story')} />
+            {campaignEvents.length === 0 ? (
+              <Text style={styles.empty}>No events are pinned to the campaign yet.</Text>
+            ) : (
+              campaignEvents.map(entity => (
+                <EntityCard
+                  key={entity.id}
+                  entity={entity}
+                  onPress={() => openEntity(entity)}
+                  onTogglePin={() => togglePin(campaignId, entity.id)}
+                />
+              ))
+            )}
+            <AddButton label="+ Add event" onPress={() => addNew('event', true)} />
           </View>
-
-          <Text style={styles.sectionLabel}>Artifacts</Text>
-          {listFor('item').length === 0 ? (
-            <Text style={styles.empty}>No artifacts yet.</Text>
-          ) : (
-            listFor('item').map(entity => (
-              <EntityCard
-                key={entity.id}
-                entity={entity}
-                onPress={() => openEntity(entity)}
-                onTogglePin={() => togglePin(campaignId, entity.id)}
-              />
-            ))
-          )}
         </View>
       ) : null}
 
@@ -301,16 +287,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.displayItalic,
     fontSize: 14,
     lineHeight: 19,
-    color: colors.muted,
-  },
-  sectionLabel: {
-    marginTop: 16,
-    marginBottom: 8,
-    fontFamily: fonts.body,
-    fontSize: 10,
-    lineHeight: 13,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
     color: colors.muted,
   },
   gap: {

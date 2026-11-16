@@ -10,8 +10,6 @@ import { LocationCard } from './LocationCard';
 import { PaperCard } from './PaperCard';
 import { PartyRow } from './PartyRow';
 
-const artifactTints = ['#6f512b', '#5f6b8a', '#7a5c1f', '#4f5f4a'];
-
 const appearanceFields: EditableField[] = [
   { key: 'physicalDescription', label: 'Description', multiline: true },
   { key: 'age', label: 'Age' },
@@ -34,14 +32,14 @@ function useRevealed(kind: DmEntity['kind']) {
   return dm.entities.filter(entity => entity.pinned && entity.kind === kind);
 }
 
-function Paragraphs({ text, style }: { text: string; style?: object }) {
+function Paragraphs({ text }: { text: string }) {
   return (
     <>
       {text
         .split('\n\n')
         .filter(paragraph => paragraph.trim().length > 0)
         .map((paragraph, index) => (
-          <Text key={index} style={[styles.paragraph, index > 0 && styles.paragraphGap, style]}>
+          <Text key={index} style={[styles.paragraph, index > 0 && styles.paragraphGap]}>
             {paragraph}
           </Text>
         ))}
@@ -49,10 +47,24 @@ function Paragraphs({ text, style }: { text: string; style?: object }) {
   );
 }
 
-/** The campaign page: the next session, then whatever the DM has revealed on the story page. */
+/** One pinned event as players read it. */
+function RevealedEvent({ entry, style }: { entry: DmEntity; style?: object }) {
+  return (
+    <PaperCard label={entry.subtitle || 'Event'} title={entry.title} style={style}>
+      <Paragraphs text={entry.body} />
+      {entry.facts.length > 0 ? (
+        <View style={styles.factsBlock}>
+          <Text style={styles.lootLabel}>Loot recovered</Text>
+          <Text style={styles.loot}>{entry.facts.join(' · ')}</Text>
+        </View>
+      ) : null}
+    </PaperCard>
+  );
+}
+
+/** The campaign page: the next session, then the events the DM has pinned. */
 export function StorySection() {
-  const story = useRevealed('story');
-  const artifacts = useRevealed('item');
+  const events = useRevealed('event');
 
   return (
     <View>
@@ -71,37 +83,18 @@ export function StorySection() {
         </View>
       </PaperCard>
 
-      {story.map(entry => (
-        <PaperCard key={entry.id} label={entry.subtitle || 'Story'} title={entry.title} style={styles.gap}>
-          <Paragraphs text={entry.body} />
-          {entry.facts.length > 0 ? (
-            <View style={styles.factsBlock}>
-              <Text style={styles.lootLabel}>Loot recovered</Text>
-              <Text style={styles.loot}>{entry.facts.join(' · ')}</Text>
-            </View>
-          ) : null}
-        </PaperCard>
+      {events.map(entry => (
+        <RevealedEvent key={entry.id} entry={entry} style={styles.gap} />
       ))}
 
-      {artifacts.map((artifact, index) => (
-        <PaperCard key={artifact.id} label={artifact.subtitle} title={artifact.title} style={styles.gap}>
-          <View style={styles.artifactHead}>
-            <View style={[styles.artifactMedallion, { backgroundColor: artifactTints[index % artifactTints.length] }]}>
-              <Text style={styles.artifactInitial}>{artifact.initial}</Text>
-            </View>
-          </View>
-          <Paragraphs text={artifact.body} />
-        </PaperCard>
-      ))}
-
-      {story.length === 0 && artifacts.length === 0 ? (
+      {events.length === 0 ? (
         <Text style={[styles.tabBlurb, styles.gap]}>The story has not been shared yet.</Text>
       ) : null}
     </View>
   );
 }
 
-/** Events the DM has revealed, newest first as the DM ordered them. */
+/** Every event the DM has revealed. */
 export function EventsSection() {
   const events = useRevealed('event');
 
@@ -110,14 +103,7 @@ export function EventsSection() {
       <Text style={styles.tabBlurb}>Everything that has moved the story forward.</Text>
       {events.length === 0 ? <Text style={styles.tabBlurb}>No events have been revealed yet.</Text> : null}
       {events.map((event, index) => (
-        <PaperCard
-          key={event.id}
-          label={event.subtitle}
-          title={event.title}
-          style={index > 0 ? styles.gap : undefined}
-        >
-          <Paragraphs text={event.body} />
-        </PaperCard>
+        <RevealedEvent key={event.id} entry={event} style={index > 0 ? styles.gap : undefined} />
       ))}
     </View>
   );
@@ -333,26 +319,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.ink,
     marginTop: 2,
-  },
-  artifactHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 4,
-  },
-  artifactMedallion: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  artifactInitial: {
-    fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 21,
-    color: colors.cream,
   },
 });

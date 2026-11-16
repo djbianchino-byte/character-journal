@@ -2,14 +2,13 @@ import { useSyncExternalStore } from 'react';
 
 import { campaign } from './campaign';
 
-export type EntityKind = 'location' | 'character' | 'event' | 'item' | 'story';
+export type EntityKind = 'location' | 'character' | 'event' | 'item';
 
 export const entityKindLabels: Record<EntityKind, string> = {
   location: 'Location',
   character: 'Character',
   event: 'Event',
   item: 'Item',
-  story: 'Story',
 };
 
 /** Labels for the three fields of each kind, shared by the add and edit forms. */
@@ -18,7 +17,6 @@ export const entityFieldLabels: Record<EntityKind, { title: string; subtitle: st
   character: { title: 'Name', subtitle: 'Role', body: 'Notes' },
   event: { title: 'Title', subtitle: 'When', body: 'Summary' },
   item: { title: 'Name', subtitle: 'Kind', body: 'Description' },
-  story: { title: 'Title', subtitle: 'Label', body: 'Story' },
 };
 
 const kindTints: Record<EntityKind, string> = {
@@ -26,7 +24,6 @@ const kindTints: Record<EntityKind, string> = {
   character: '#5f6b8a',
   event: '#7a5c1f',
   item: '#4f5f4a',
-  story: '#6b4a24',
 };
 
 export type DmEntity = {
@@ -53,7 +50,7 @@ function initialFor(title: string) {
 }
 
 function seedEntities(): DmEntity[] {
-  const locations: DmEntity[] = campaign.locations.map((place, index) => ({
+  const locations: DmEntity[] = campaign.locations.map(place => ({
     id: `location-${place.id}`,
     kind: 'location',
     title: place.name,
@@ -77,7 +74,7 @@ function seedEntities(): DmEntity[] {
     pinned: false,
   }));
 
-  const events: DmEntity[] = campaign.events.map(event => ({
+  const timeline: DmEntity[] = campaign.events.map(event => ({
     id: `event-${event.id}`,
     kind: 'event',
     title: event.title,
@@ -89,34 +86,23 @@ function seedEntities(): DmEntity[] {
     pinned: false,
   }));
 
-  // Artifacts appear on the story page, so they start revealed to players.
-  const items: DmEntity[] = campaign.artifacts.map(artifact => ({
-    id: `item-${artifact.id}`,
-    kind: 'item',
-    title: artifact.name,
-    subtitle: artifact.kind,
-    body: `${artifact.summary}\n\n${artifact.detail}`,
-    facts: [],
-    initial: artifact.initial,
-    tint: kindTints.item,
-    pinned: true,
-  }));
-
+  // The campaign's story (chapters, last session and artifacts) is written as events,
+  // and starts pinned so players see it on their campaign page.
   const chapters: DmEntity[] = campaign.story.map((chapter, index) => ({
-    id: `story-chapter-${index}`,
-    kind: 'story',
+    id: `event-chapter-${index}`,
+    kind: 'event',
     title: chapter.title,
     subtitle: '',
     body: chapter.body,
     facts: [],
     initial: initialFor(chapter.title),
-    tint: kindTints.story,
+    tint: kindTints.event,
     pinned: true,
   }));
 
   const lastSession: DmEntity = {
-    id: 'story-last-session',
-    kind: 'story',
+    id: 'event-last-session',
+    kind: 'event',
     title: campaign.lastSession.title,
     subtitle: campaign.lastSession.date,
     body: [
@@ -125,11 +111,23 @@ function seedEntities(): DmEntity[] {
     ].join('\n\n'),
     facts: campaign.lastSession.loot,
     initial: initialFor(campaign.lastSession.title),
-    tint: kindTints.story,
+    tint: kindTints.event,
     pinned: true,
   };
 
-  return [...locations, ...characters, ...events, ...items, ...chapters, lastSession];
+  const artifacts: DmEntity[] = campaign.artifacts.map(artifact => ({
+    id: `event-artifact-${artifact.id}`,
+    kind: 'event',
+    title: artifact.name,
+    subtitle: artifact.kind,
+    body: `${artifact.summary}\n\n${artifact.detail}`,
+    facts: [],
+    initial: artifact.initial,
+    tint: kindTints.event,
+    pinned: true,
+  }));
+
+  return [...locations, ...characters, ...timeline, ...chapters, lastSession, ...artifacts];
 }
 
 let state: Record<string, CampaignDm> = {
@@ -160,6 +158,7 @@ function currentFor(campaignId: string) {
 export function addEntity(
   campaignId: string,
   input: { kind: EntityKind; title: string; subtitle: string; body: string },
+  pinned = false,
 ) {
   const title = input.title.trim();
   const id = `${input.kind}-${Date.now()}`;
@@ -177,8 +176,7 @@ export function addEntity(
         facts: [],
         initial: initialFor(title),
         tint: kindTints[input.kind],
-        // Story details are written on the story page, so they are revealed by default.
-        pinned: input.kind === 'story',
+        pinned,
       },
     ],
   });
