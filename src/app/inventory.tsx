@@ -15,7 +15,7 @@ import {
   type InventoryEntry,
   type ItemType,
 } from '../data/inventoryStore';
-import { colors, fonts, radius } from '../theme';
+import { colors, fonts } from '../theme';
 
 const quillIcon = require('../../assets/ui/icon-quill.png');
 
@@ -96,82 +96,50 @@ export default function InventoryScreen() {
   );
 }
 
-/** Gold, silver and copper, editable in place. */
+const denominations = [
+  { key: 'gold', label: 'Gold' },
+  { key: 'silver', label: 'Silver' },
+  { key: 'copper', label: 'Copper' },
+] as const;
+
+/** Gold, silver and copper. Tap an amount and type straight over it. */
 function CoinPurse({ coins }: { coins: Coins }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState({ gold: '', silver: '', copper: '' });
+  const [draft, setDraft] = useState({
+    gold: String(coins.gold),
+    silver: String(coins.silver),
+    copper: String(coins.copper),
+  });
 
-  function startEditing() {
-    setDraft({ gold: String(coins.gold), silver: String(coins.silver), copper: String(coins.copper) });
-    setEditing(true);
+  function change(key: keyof Coins, text: string) {
+    const digits = text.replace(/[^0-9]/g, '').slice(0, 6);
+    setDraft(current => ({ ...current, [key]: digits }));
+    setCoins({ ...coins, [key]: Number.parseInt(digits, 10) || 0 });
   }
-
-  function save() {
-    setCoins({
-      gold: Number.parseInt(draft.gold, 10) || 0,
-      silver: Number.parseInt(draft.silver, 10) || 0,
-      copper: Number.parseInt(draft.copper, 10) || 0,
-    });
-    setEditing(false);
-  }
-
-  const denominations = [
-    { key: 'gold', label: 'Gold', value: coins.gold },
-    { key: 'silver', label: 'Silver', value: coins.silver },
-    { key: 'copper', label: 'Copper', value: coins.copper },
-  ] as const;
 
   return (
-    <PaperCard
-      label="Coin purse"
-      onAction={editing ? () => setEditing(false) : startEditing}
-      actionLabel={editing ? 'Cancel editing coins' : 'Edit coins'}
-    >
+    <PaperCard label="Coin purse">
       <View style={styles.coinRow}>
-        {denominations.map(denomination =>
-          editing ? (
-            <View key={denomination.key} style={styles.coin}>
-              <Text style={styles.coinLabel}>{denomination.label}</Text>
-              <TextInput
-                value={draft[denomination.key]}
-                onChangeText={text =>
-                  setDraft(current => ({ ...current, [denomination.key]: text.replace(/[^0-9]/g, '') }))
-                }
-                keyboardType="number-pad"
-                maxLength={6}
-                accessibilityLabel={`${denomination.label} pieces`}
-                selectTextOnFocus
-                style={styles.coinInput}
-              />
-            </View>
-          ) : (
-            <View key={denomination.key} style={styles.coin}>
-              <Text style={styles.coinLabel}>{denomination.label}</Text>
-              <Text style={styles.coinValue}>{denomination.value}</Text>
-            </View>
-          ),
-        )}
+        {denominations.map(denomination => (
+          <View key={denomination.key} style={styles.coin}>
+            <Text style={styles.coinLabel}>{denomination.label}</Text>
+            <TextInput
+              value={draft[denomination.key]}
+              onChangeText={text => change(denomination.key, text)}
+              onBlur={() =>
+                setDraft(current => ({
+                  ...current,
+                  [denomination.key]: String(coins[denomination.key]),
+                }))
+              }
+              keyboardType="number-pad"
+              maxLength={6}
+              accessibilityLabel={`${denomination.label} pieces`}
+              selectTextOnFocus
+              style={styles.coinInput}
+            />
+          </View>
+        ))}
       </View>
-
-      {editing ? (
-        <View style={styles.actions}>
-          <Pressable
-            onPress={() => setEditing(false)}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            onPress={save}
-            accessibilityRole="button"
-            accessibilityLabel="Save coins"
-            style={({ pressed }) => [styles.save, pressed && styles.pressed]}
-          >
-            <Text style={styles.saveText}>Save</Text>
-          </Pressable>
-        </View>
-      ) : null}
     </PaperCard>
   );
 }
@@ -256,49 +224,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.muted,
   },
-  coinValue: {
+  coinInput: {
+    width: '100%',
+    paddingVertical: 0,
     fontFamily: fonts.numeral,
     fontSize: 23,
     lineHeight: 25,
     color: colors.ink,
-  },
-  coinInput: {
-    width: '100%',
-    marginTop: 1,
-    paddingVertical: 0,
-    fontFamily: fonts.numeral,
-    fontSize: 21,
-    lineHeight: 25,
-    color: colors.ink,
     textAlign: 'center',
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: 10,
-  },
-  cancel: {
-    paddingVertical: 6,
-  },
-  cancelText: {
-    fontFamily: fonts.display,
-    fontSize: 16,
-    color: colors.muted,
-  },
-  save: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.card,
-    backgroundColor: colors.green,
-  },
-  saveText: {
-    fontFamily: fonts.display,
-    fontSize: 16,
-    color: colors.goldLight,
   },
   gap: {
     marginTop: 11,
