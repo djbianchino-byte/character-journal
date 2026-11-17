@@ -14,7 +14,7 @@ export const entityKindLabels: Record<EntityKind, string> = {
 /** Labels for the three fields of each kind, shared by the add and edit forms. */
 export const entityFieldLabels: Record<EntityKind, { title: string; subtitle: string; body: string }> = {
   location: { title: 'Name', subtitle: 'Region', body: 'Summary' },
-  character: { title: 'Name', subtitle: 'Role', body: 'Notes' },
+  character: { title: 'Name', subtitle: 'Role', body: 'Description' },
   event: { title: 'Title', subtitle: 'When', body: 'Summary' },
   item: { title: 'Name', subtitle: 'Kind', body: 'Description' },
 };
