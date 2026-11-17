@@ -7,6 +7,7 @@ import { EntityCard } from '../../../components/EntityCard';
 import { PaperCard } from '../../../components/PaperCard';
 import { PaperScreen } from '../../../components/PaperScreen';
 import { PartyRow } from '../../../components/PartyRow';
+import { PinToggle } from '../../../components/PinToggle';
 import { TabRow, type TabItem } from '../../../components/TabRow';
 import { campaign } from '../../../data/campaign';
 import { useCampaigns } from '../../../data/campaignList';
@@ -45,6 +46,7 @@ export default function DmCampaignScreen() {
   const dm = useDm(id);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [pinning, setPinning] = useState(false);
+  const [addStep, setAddStep] = useState<'kinds' | EntityKind | null>(null);
 
   const active: DmTab = tabs.some(entry => entry.key === tab) ? (tab as DmTab) : 'campaign';
 
@@ -213,13 +215,62 @@ export default function DmCampaignScreen() {
                 />
               ))
             )}
-            <View style={styles.addGrid}>
-              {(['location', 'character', 'event', 'item'] as EntityKind[]).map(kind => (
-                <View key={kind} style={styles.addCell}>
-                  <AddButton label={`+ ${entityKindLabels[kind]}`} onPress={() => addNew(kind, true)} />
+            <AddButton
+              label={addStep ? 'Close' : '+'}
+              primary={!addStep}
+              onPress={() => setAddStep(addStep ? null : 'kinds')}
+            />
+
+            {addStep === 'kinds' ? (
+              <PaperCard label="Add to campaign" style={styles.gap}>
+                {(['location', 'character', 'event', 'item'] as EntityKind[]).map((kind, index) => (
+                  <Pressable
+                    key={kind}
+                    onPress={() => setAddStep(kind)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Choose ${entityKindLabels[kind]}`}
+                    style={[styles.pinRow, index === 3 && styles.pinRowLast]}
+                  >
+                    <Text style={styles.pinTitle}>{entityKindLabels[kind]}</Text>
+                    <Text style={styles.chevron}>›</Text>
+                  </Pressable>
+                ))}
+              </PaperCard>
+            ) : null}
+
+            {addStep && addStep !== 'kinds' ? (
+              <PaperCard label={`${entityKindLabels[addStep]}s`} style={styles.gap}>
+                <Pressable
+                  onPress={() => setAddStep('kinds')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to kinds"
+                  style={styles.backLink}
+                >
+                  <Text style={styles.pinnedToggle}>‹ Back</Text>
+                </Pressable>
+
+                {listFor(addStep).length === 0 ? (
+                  <Text style={styles.empty}>None yet.</Text>
+                ) : (
+                  listFor(addStep).map((entity, index, all) => (
+                    <View key={entity.id} style={[styles.pickRow, index === all.length - 1 && styles.pinRowLast]}>
+                      <Text style={[styles.pinTitle, styles.pickTitle]} numberOfLines={1}>
+                        {entity.title}
+                      </Text>
+                      <PinToggle
+                        pinned={entity.pinned}
+                        onToggle={() => togglePin(campaignId, entity.id)}
+                        title={entity.title}
+                      />
+                    </View>
+                  ))
+                )}
+
+                <View style={styles.gap}>
+                  <AddButton label={`+ Create new ${entityKindLabels[addStep].toLowerCase()}`} onPress={() => addNew(addStep, true)} />
                 </View>
-              ))}
-            </View>
+              </PaperCard>
+            ) : null}
           </View>
         </View>
       ) : null}
@@ -267,13 +318,22 @@ export default function DmCampaignScreen() {
 }
 
 const styles = StyleSheet.create({
-  addGrid: {
+  pickRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSoft,
   },
-  addCell: {
-    width: '48%',
+  pickTitle: {
+    flex: 1,
+  },
+  backLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    marginBottom: 4,
   },
   code: {
     fontFamily: fonts.numeral,
