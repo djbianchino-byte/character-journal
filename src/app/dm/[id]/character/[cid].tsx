@@ -35,7 +35,7 @@ export default function DmCharacterScreen() {
     );
   }
 
-  const kicker = player.isYou ? `${player.meta} · your character` : `${player.meta} · ${player.playedBy}`;
+  const kicker = player.meta;
 
   return (
     <PaperScreen kicker={kicker} title={player.name} onBack={leave}>

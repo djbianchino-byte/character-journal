@@ -17,7 +17,7 @@ const initial: Profile = {
   ancestry: 'Human',
   className: 'Paladin',
   level: character.level,
-  playedBy: 'Jamie',
+  playedBy: 'You',
   avatarUri: null,
 };
 

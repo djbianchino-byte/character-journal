@@ -14,10 +14,6 @@ export default function OverviewScreen() {
     <SheetScaffold variant="home">
       <View style={styles.hero}>
         <Kicker>{campaign.title} · Session 12</Kicker>
-        <Text style={styles.quote}>
-          “I am the shield{'\n'}that does not break.”
-        </Text>
-        <Text style={styles.attribution}>— Ser Garyth</Text>
       </View>
 
       <PaperCard label="Next at the table" title="Session 13">

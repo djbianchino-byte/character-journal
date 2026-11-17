@@ -283,7 +283,7 @@ export default function DmCampaignScreen() {
                 key={player.id}
                 name={player.name}
                 initial={player.initial}
-                meta={player.isYou ? `${player.meta} · your character` : `${player.meta} · played by ${player.playedBy}`}
+                meta={player.meta}
                 tint={player.tint}
                 isYou={player.isYou}
                 onPress={() => router.push(`/dm/${campaignId}/character/${player.id}` as never)}

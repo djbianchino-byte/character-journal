@@ -68,7 +68,7 @@ export type Character = {
 
 export const character: Character = {
   name: 'Ser Garyth',
-  subtitle: 'Human Paladin 3 · played by Jamie',
+  subtitle: 'Human Paladin 3 · played by You',
   initials: 'SG',
   level: 3,
 

@@ -167,7 +167,7 @@ export function CharactersSection({ onOpen }: CharactersProps) {
           key={player.id}
           name={player.name}
           initial={player.initial}
-          meta={player.isYou ? `${player.meta} · you` : `${player.meta} · played by ${player.playedBy}`}
+          meta={player.meta}
           tint={player.tint}
           isYou={player.isYou}
           onPress={() => onOpen(player)}
