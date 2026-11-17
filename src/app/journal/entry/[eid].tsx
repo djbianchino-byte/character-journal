@@ -3,10 +3,20 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { EntityEditForm, type EntityFormValues } from '../../../components/EntityEditForm';
+import { EntityAvatar } from '../../../components/EntityAvatar';
+import { EntityImageEditor } from '../../../components/EntityImageEditor';
 import { Kicker, PaperCard } from '../../../components/PaperCard';
 import { SheetScaffold } from '../../../components/SheetScaffold';
 import { campaign } from '../../../data/campaign';
-import { characterDirectory, entityKindLabels, isRevealed, updateEntity, useDm, type DmEntity } from '../../../data/dmStore';
+import {
+  characterDirectory,
+  entityKindLabels,
+  isRevealed,
+  setEntityImage,
+  updateEntity,
+  useDm,
+  type DmEntity,
+} from '../../../data/dmStore';
 import { colors, fonts } from '../../../theme';
 
 export default function JournalEntryScreen() {
@@ -43,14 +53,16 @@ function EntryDetail({ entry }: { entry: DmEntity }) {
   return (
     <SheetScaffold journalSection={section}>
       <View style={styles.head}>
-        <View style={[styles.medallion, { backgroundColor: entry.tint }]}>
-          <Text style={styles.initial}>{entry.initial}</Text>
-        </View>
+        <EntityAvatar initial={entry.initial} tint={entry.tint} imageUri={entry.imageUri} size={56} />
         <View style={styles.headText}>
           <Kicker>{entry.subtitle ? `${entityKindLabels[entry.kind]} · ${entry.subtitle}` : entityKindLabels[entry.kind]}</Kicker>
           <Text style={styles.title}>{entry.title}</Text>
         </View>
       </View>
+
+      {canEdit ? (
+        <EntityImageEditor entity={entry} onChange={uri => setEntityImage(campaign.id, entry.id, uri)} />
+      ) : null}
 
       <PaperCard
         label={entityKindLabels[entry.kind]}
@@ -104,21 +116,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginBottom: 14,
-  },
-  medallion: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: {
-    fontFamily: fonts.display,
-    fontSize: 25,
-    lineHeight: 27,
-    color: colors.cream,
   },
   headText: {
     flex: 1,

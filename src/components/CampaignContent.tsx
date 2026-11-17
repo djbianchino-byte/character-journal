@@ -23,6 +23,7 @@ import { colors, fonts } from '../theme';
 import { AddButton } from './AddButton';
 import { BackstoryBox } from './BackstoryBox';
 import { EditableCard, type EditableField } from './EditableCard';
+import { EntityAvatar } from './EntityAvatar';
 import { LocationCard } from './LocationCard';
 import { PaperCard } from './PaperCard';
 import { PartyRow } from './PartyRow';
@@ -194,6 +195,7 @@ export function PlacesSection({ onOpen }: { onOpen: OpenEntry }) {
           summary={place.body.split('\n\n')[0] ?? ''}
           initial={place.initial}
           tint={place.tint}
+          imageUri={place.imageUri}
           onPress={() => onOpen(place)}
         />
       ))}
@@ -246,9 +248,7 @@ export function CharacterListSection({ onOpen }: { onOpen: OpenEntry }) {
             accessibilityLabel={`Open ${entity.title}`}
             style={styles.characterOpen}
           >
-            <View style={[styles.medallion, { backgroundColor: entity.tint }]}>
-              <Text style={styles.initial}>{entity.initial}</Text>
-            </View>
+            <EntityAvatar initial={entity.initial} tint={entity.tint} imageUri={entity.imageUri} size={38} />
             <View style={styles.characterBody}>
               <Text style={styles.characterName}>{entity.title}</Text>
               <Text style={styles.characterMeta} numberOfLines={1}>
@@ -324,9 +324,7 @@ export function BackstorySection() {
         ) : null}
         {relationships.map(person => (
           <View key={person.id} style={styles.relationRow}>
-            <View style={[styles.medallion, { backgroundColor: person.tint }]}>
-              <Text style={styles.initial}>{person.initial}</Text>
-            </View>
+            <EntityAvatar initial={person.initial} tint={person.tint} imageUri={person.imageUri} size={38} />
             <View style={styles.characterBody}>
               <Text style={styles.characterName}>{person.name}</Text>
               <Text style={styles.characterMeta} numberOfLines={1}>
@@ -452,21 +450,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderSoft,
-  },
-  medallion: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    lineHeight: 20,
-    color: colors.cream,
   },
   characterBody: {
     flex: 1,

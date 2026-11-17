@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, paperShadow, radius } from '../theme';
+import { EntityAvatar } from './EntityAvatar';
 
 type Props = {
   title: string;
@@ -8,11 +9,12 @@ type Props = {
   summary: string;
   initial: string;
   tint: string;
+  imageUri?: string;
   onPress: () => void;
 };
 
 /** Location entry in the journal's Places tab. */
-export function LocationCard({ title, subtitle, summary, initial, tint, onPress }: Props) {
+export function LocationCard({ title, subtitle, summary, initial, tint, imageUri, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -20,9 +22,7 @@ export function LocationCard({ title, subtitle, summary, initial, tint, onPress 
       accessibilityLabel={`${title}${subtitle ? `, ${subtitle}` : ''}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      <View style={[styles.medallion, { backgroundColor: tint }]}>
-        <Text style={styles.initial}>{initial}</Text>
-      </View>
+      <EntityAvatar initial={initial} tint={tint} imageUri={imageUri} size={44} />
 
       <View style={styles.body}>
         <Text style={styles.name}>{title}</Text>
@@ -52,21 +52,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
-  },
-  medallion: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: {
-    fontFamily: fonts.display,
-    fontSize: 20,
-    lineHeight: 22,
-    color: colors.cream,
   },
   body: {
     flex: 1,

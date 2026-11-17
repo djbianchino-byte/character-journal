@@ -43,6 +43,8 @@ export type DmEntity = {
   author: EntityAuthor;
   /** Ids of characters involved in this entry. */
   linked: string[];
+  /** Portrait that replaces the initials bubble, once added. */
+  imageUri?: string;
 };
 
 type CampaignDm = {
@@ -189,6 +191,7 @@ export type DirectoryCharacter = {
   tint: string;
   /** Where the character comes from. */
   source: 'party' | 'lore' | 'dm' | 'player';
+  imageUri?: string;
 };
 
 /**
@@ -221,6 +224,7 @@ export function characterDirectory(entities: DmEntity[]): DirectoryCharacter[] {
       subtitle: entity.subtitle,
       tint: entity.tint,
       source: entity.author === 'player' ? 'player' : 'dm',
+      imageUri: entity.imageUri,
     }));
   return [...party, ...lore, ...entries];
 }
@@ -291,6 +295,17 @@ export function togglePin(campaignId: string, entityId: string) {
     ...current,
     entities: current.entities.map(entity =>
       entity.id === entityId ? { ...entity, pinned: !entity.pinned } : entity,
+    ),
+  });
+}
+
+/** Replaces an entry's initials bubble with an image, or clears it back to initials. */
+export function setEntityImage(campaignId: string, entityId: string, imageUri: string | null) {
+  const current = currentFor(campaignId);
+  update(campaignId, {
+    ...current,
+    entities: current.entities.map(entity =>
+      entity.id === entityId ? { ...entity, imageUri: imageUri ?? undefined } : entity,
     ),
   });
 }

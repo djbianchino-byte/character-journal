@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { entityKindLabels, type DmEntity } from '../data/dmStore';
 import { colors, fonts, paperShadow, radius } from '../theme';
+import { EntityAvatar } from './EntityAvatar';
 import { PinToggle } from './PinToggle';
 
 type Props = {
@@ -19,9 +20,7 @@ export function EntityCard({ entity, onPress, onTogglePin }: Props) {
       accessibilityLabel={`${entity.title}, ${entityKindLabels[entity.kind]}`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      <View style={[styles.medallion, { backgroundColor: entity.tint }]}>
-        <Text style={styles.initial}>{entity.initial}</Text>
-      </View>
+      <EntityAvatar initial={entity.initial} tint={entity.tint} imageUri={entity.imageUri} size={42} />
 
       <View style={styles.body}>
         <Text style={styles.title}>{entity.title}</Text>
@@ -59,21 +58,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
-  },
-  medallion: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: {
-    fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 21,
-    color: colors.cream,
   },
   body: {
     flex: 1,

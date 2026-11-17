@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PaperCard } from '../../../../components/PaperCard';
+import { EntityImageEditor } from '../../../../components/EntityImageEditor';
 import { PaperScreen } from '../../../../components/PaperScreen';
 import { PinToggle } from '../../../../components/PinToggle';
 import {
   entityFieldLabels,
   entityKindLabels,
+  setEntityImage,
   togglePin,
   updateEntity,
   useDm,
@@ -96,6 +98,8 @@ function EntityDetail({ campaignId, entity, onTogglePin, onBack }: DetailProps) 
       title={entity.title}
       onBack={onBack}
     >
+      <EntityImageEditor entity={entity} onChange={uri => setEntityImage(campaignId, entity.id, uri)} />
+
       <View style={styles.pinRow}>
         <PinToggle pinned={entity.pinned} onToggle={onTogglePin} title={entity.title} />
       </View>
