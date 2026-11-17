@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { campaign } from '../data/campaign';
+import { useCampaigns } from '../data/campaignList';
 import {
   addBackstoryBox,
   removeBackstoryBox,
@@ -104,20 +105,37 @@ function RevealedEvent({ entry, style, onOpen }: { entry: DmEntity; style?: obje
 /** The campaign page: the next session, then everything the DM has pinned. */
 export function StorySection() {
   const pinned = usePinned();
+  const campaigns = useCampaigns();
+  const session = campaigns.find(entry => entry.id === campaign.id)?.nextSession ?? {
+    month: campaign.nextSession.month,
+    day: campaign.nextSession.day,
+    time: campaign.nextSession.time,
+    place: 'The Last Hearth',
+  };
+  const hasDate = Boolean(session.month || session.day);
+  const when = [session.month, session.day].filter(Boolean).join(' ');
 
   return (
     <View>
       <PaperCard>
         <View style={styles.nextRow}>
-          <View style={styles.dateBadge}>
-            <Text style={styles.dateMonth}>{campaign.nextSession.month}</Text>
-            <Text style={styles.dateDay}>{campaign.nextSession.day}</Text>
-          </View>
+          {hasDate ? (
+            <View style={styles.dateBadge}>
+              <Text style={styles.dateMonth}>{session.month}</Text>
+              <Text style={styles.dateDay}>{session.day}</Text>
+            </View>
+          ) : null}
           <View style={styles.nextBody}>
             <Text style={styles.cardLabel}>Next session</Text>
             <Text style={styles.nextTitle}>At the table again</Text>
-            <Text style={styles.nextMeta}>{campaign.nextSession.time}</Text>
-            <Text style={styles.nextMeta}>The Last Hearth · bring your dice</Text>
+            {when || session.time ? (
+              <Text style={styles.nextMeta}>
+                {[when, session.time].filter(Boolean).join(' · ')}
+              </Text>
+            ) : (
+              <Text style={styles.nextMeta}>Not scheduled yet.</Text>
+            )}
+            {session.place ? <Text style={styles.nextMeta}>{session.place} · bring your dice</Text> : null}
           </View>
         </View>
       </PaperCard>

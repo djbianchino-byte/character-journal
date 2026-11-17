@@ -5,12 +5,21 @@ import { InfoRow, Kicker, PaperCard } from '../components/PaperCard';
 import { SheetScaffold } from '../components/SheetScaffold';
 import { passivePerception, useAbilityScores } from '../data/abilitiesStore';
 import { campaign } from '../data/campaign';
+import { useCampaigns } from '../data/campaignList';
 import { character } from '../data/character';
 import { colors, fonts } from '../theme';
 
 export default function OverviewScreen() {
   const router = useRouter();
   const scores = useAbilityScores();
+  const campaigns = useCampaigns();
+  const session = campaigns.find(entry => entry.id === campaign.id)?.nextSession ?? {
+    month: campaign.nextSession.month,
+    day: campaign.nextSession.day,
+    time: campaign.nextSession.time,
+    place: 'The Last Hearth',
+  };
+  const when = [session.month, session.day].filter(Boolean).join(' ');
 
   return (
     <SheetScaffold variant="home">
@@ -20,9 +29,9 @@ export default function OverviewScreen() {
 
       <PaperCard label="Next at the table" title="Session 13">
         <Text style={styles.meta}>
-          {campaign.nextSession.month} {campaign.nextSession.day} · {campaign.nextSession.time}
+          {when ? `${when} · ${session.time}` : 'Not scheduled yet.'}
         </Text>
-        <Text style={styles.metaSoft}>The Last Hearth · bring your dice</Text>
+        {session.place ? <Text style={styles.metaSoft}>{session.place} · bring your dice</Text> : null}
         <Pressable
           onPress={() => router.push('/journal' as never)}
           accessibilityRole="button"

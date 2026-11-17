@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AddButton } from '../../../components/AddButton';
 import { EntityCard } from '../../../components/EntityCard';
@@ -10,7 +10,12 @@ import { PartyRow } from '../../../components/PartyRow';
 import { PinToggle } from '../../../components/PinToggle';
 import { TabRow, type TabItem } from '../../../components/TabRow';
 import { campaign } from '../../../data/campaign';
-import { useCampaigns } from '../../../data/campaignList';
+import {
+  nextSessionLine,
+  updateCampaign,
+  useCampaigns,
+  type NextSession,
+} from '../../../data/campaignList';
 import {
   entityKindLabels,
   setSessionLive,
@@ -19,7 +24,7 @@ import {
   type DmEntity,
   type EntityKind,
 } from '../../../data/dmStore';
-import { colors, fonts } from '../../../theme';
+import { colors, fonts, radius } from '../../../theme';
 
 type DmTab = 'campaign' | 'locations' | 'characters' | 'events' | 'items';
 
@@ -180,17 +185,7 @@ export default function DmCampaignScreen() {
         <Text style={styles.body}>Players enter this code on the join screen to sit at your table.</Text>
       </PaperCard>
 
-      <PaperCard label="Next session" style={styles.gap}>
-        <Text style={styles.nextTitle}>{item.nextSession}</Text>
-        <Text style={styles.body}>
-          {dm.live ? 'The table is live. End the session when you wrap up.' : 'Not started yet.'}
-        </Text>
-        <AddButton
-          label={dm.live ? 'End session' : 'Start session'}
-          primary={!dm.live}
-          onPress={() => setSessionLive(campaignId, !dm.live)}
-        />
-      </PaperCard>
+      <NextSessionCard campaignId={campaignId} session={item.nextSession} live={dm.live} />
 
       <View style={styles.gap}>
         <TabRow tabs={tabs} active={active} onChange={changeTab} />
@@ -317,6 +312,114 @@ export default function DmCampaignScreen() {
   );
 }
 
+type NextSessionCardProps = {
+  campaignId: string;
+  session: NextSession;
+  live: boolean;
+};
+
+/** What players see for the next session: date, time and meeting place. The DM edits it here. */
+function NextSessionCard({ campaignId, session, live }: NextSessionCardProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<NextSession>(session);
+
+  function open() {
+    setDraft(session);
+    setEditing(true);
+  }
+
+  function save() {
+    updateCampaign(campaignId, { nextSession: draft });
+    setEditing(false);
+  }
+
+  return (
+    <PaperCard
+      label="Next session"
+      onAction={editing ? () => setEditing(false) : open}
+      actionLabel={editing ? 'Cancel editing next session' : 'Edit next session'}
+      style={styles.gap}
+    >
+      {editing ? (
+        <View style={styles.sessionForm}>
+          <View style={styles.sessionRow}>
+            <View style={styles.sessionMonth}>
+              <Text style={styles.fieldLabel}>Month</Text>
+              <TextInput
+                value={draft.month}
+                onChangeText={month => setDraft(current => ({ ...current, month }))}
+                maxLength={9}
+                accessibilityLabel="Next session month"
+                style={styles.fieldInput}
+              />
+            </View>
+            <View style={styles.sessionDay}>
+              <Text style={styles.fieldLabel}>Day</Text>
+              <TextInput
+                value={draft.day}
+                onChangeText={day => setDraft(current => ({ ...current, day }))}
+                maxLength={4}
+                accessibilityLabel="Next session day"
+                style={styles.fieldInput}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.fieldLabel}>Time</Text>
+          <TextInput
+            value={draft.time}
+            onChangeText={time => setDraft(current => ({ ...current, time }))}
+            maxLength={40}
+            accessibilityLabel="Next session time"
+            style={styles.fieldInput}
+          />
+
+          <Text style={styles.fieldLabel}>Where</Text>
+          <TextInput
+            value={draft.place}
+            onChangeText={place => setDraft(current => ({ ...current, place }))}
+            maxLength={40}
+            accessibilityLabel="Next session place"
+            style={styles.fieldInput}
+          />
+
+          <View style={styles.sessionActions}>
+            <Pressable
+              onPress={() => setEditing(false)}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.cancel, pressed && styles.dim]}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={save}
+              accessibilityRole="button"
+              accessibilityLabel="Save next session"
+              style={({ pressed }) => [styles.save, pressed && styles.dim]}
+            >
+              <Text style={styles.saveText}>Save</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <>
+          <Text style={styles.nextTitle}>{nextSessionLine(session)}</Text>
+          {session.place ? <Text style={styles.body}>{session.place}</Text> : null}
+        </>
+      )}
+
+      <Text style={[styles.body, styles.sessionStatus]}>
+        {live ? 'The table is live. End the session when you wrap up.' : 'Not started yet.'}
+      </Text>
+      <AddButton
+        label={live ? 'End session' : 'Start session'}
+        primary={!live}
+        onPress={() => setSessionLive(campaignId, !live)}
+      />
+    </PaperCard>
+  );
+}
+
 const styles = StyleSheet.create({
   pickRow: {
     flexDirection: 'row',
@@ -355,6 +458,74 @@ const styles = StyleSheet.create({
     lineHeight: 25,
     color: colors.ink,
     marginBottom: 4,
+  },
+  sessionForm: {
+    gap: 4,
+  },
+  sessionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  sessionMonth: {
+    flex: 1,
+  },
+  sessionDay: {
+    width: 86,
+  },
+  fieldLabel: {
+    marginTop: 6,
+    fontFamily: fonts.body,
+    fontSize: 9,
+    lineHeight: 12,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: colors.muted,
+  },
+  fieldInput: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.ink,
+    backgroundColor: 'rgba(255, 252, 246, 0.85)',
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    borderRadius: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+  },
+  sessionActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: 10,
+  },
+  cancel: {
+    paddingVertical: 6,
+  },
+  cancelText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.muted,
+  },
+  save: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    backgroundColor: colors.green,
+  },
+  saveText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.goldLight,
+  },
+  dim: {
+    opacity: 0.7,
+  },
+  sessionStatus: {
+    marginTop: 8,
   },
   empty: {
     fontFamily: fonts.displayItalic,

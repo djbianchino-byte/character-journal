@@ -4,6 +4,13 @@ import { campaign } from './campaign';
 
 export type CampaignRole = 'player' | 'dm';
 
+export type NextSession = {
+  month: string;
+  day: string;
+  time: string;
+  place: string;
+};
+
 export type CampaignSummary = {
   id: string;
   code: string;
@@ -12,10 +19,16 @@ export type CampaignSummary = {
   gameMaster: string;
   playerCount: number;
   description: string;
-  nextSession: string;
+  nextSession: NextSession;
 };
 
 const CODE_CHARACTERS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/** "NOV 14 · Saturday, 7:00 PM", skipping empty parts. */
+export function nextSessionLine(session: NextSession) {
+  const date = [session.month, session.day].filter(Boolean).join(' ');
+  return [date, session.time].filter(Boolean).join(' · ') || 'Not scheduled';
+}
 
 const initial: CampaignSummary[] = [
   {
@@ -26,7 +39,12 @@ const initial: CampaignSummary[] = [
     gameMaster: campaign.gameMaster,
     playerCount: campaign.playerCount,
     description: campaign.description,
-    nextSession: `${campaign.nextSession.month} ${campaign.nextSession.day} · ${campaign.nextSession.time}`,
+    nextSession: {
+      month: campaign.nextSession.month,
+      day: campaign.nextSession.day,
+      time: campaign.nextSession.time,
+      place: 'The Last Hearth',
+    },
   },
 ];
 
@@ -72,7 +90,7 @@ export function addCampaign(code: string) {
       gameMaster: 'Waiting for the GM',
       playerCount: 1,
       description: 'Joined with an invite code. The story will appear once the GM shares it.',
-      nextSession: 'Not scheduled',
+      nextSession: { month: '', day: '', time: '', place: '' },
     },
   ];
   emit();
@@ -91,11 +109,31 @@ export function createCampaign(input: { title: string; description: string; next
       gameMaster: 'You',
       playerCount: 0,
       description: input.description.trim() || 'No description yet.',
-      nextSession: input.nextSession.trim() || 'Not scheduled',
+      nextSession: { month: '', day: '', time: input.nextSession.trim(), place: '' },
     },
   ];
   emit();
   return code;
+}
+
+/** The DM edits what players see on the next-session card. */
+export function updateCampaign(id: string, patch: { nextSession?: NextSession }) {
+  campaigns = campaigns.map(item =>
+    item.id === id
+      ? {
+          ...item,
+          nextSession: patch.nextSession
+            ? {
+                month: patch.nextSession.month.trim(),
+                day: patch.nextSession.day.trim(),
+                time: patch.nextSession.time.trim(),
+                place: patch.nextSession.place.trim(),
+              }
+            : item.nextSession,
+        }
+      : item,
+  );
+  emit();
 }
 
 export function useCampaigns() {

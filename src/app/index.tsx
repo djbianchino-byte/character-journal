@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { PaperScreen } from '../components/PaperScreen';
-import { useCampaigns, type CampaignSummary } from '../data/campaignList';
+import { nextSessionLine, useCampaigns, type CampaignSummary } from '../data/campaignList';
 import { colors, fonts, paperShadow, radius } from '../theme';
 
 export default function CampaignsScreen() {
@@ -55,7 +55,7 @@ function CampaignCard({ item, onPlay, onRunAsDm }: CardProps) {
       <Text style={styles.cardText} numberOfLines={3}>
         {item.description}
       </Text>
-      <Text style={styles.cardNext}>Next session · {item.nextSession}</Text>
+      <Text style={styles.cardNext}>Next session · {nextSessionLine(item.nextSession)}</Text>
 
       <View style={styles.actions}>
         <Pressable
