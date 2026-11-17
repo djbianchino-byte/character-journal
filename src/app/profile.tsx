@@ -4,6 +4,16 @@ import { useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { PaperScreen } from '../components/PaperScreen';
+import {
+  abilityLabels,
+  abilityModifier,
+  abilityOrder,
+  clampScore,
+  formatModifier,
+  setAbilityScores,
+  useAbilityScores,
+  type AbilityScores,
+} from '../data/abilitiesStore';
 import { updateProfile, useProfile } from '../data/profileStore';
 import { colors, fonts, paperShadow, radius } from '../theme';
 
@@ -12,12 +22,16 @@ const portrait = require('../../assets/ui/portrait-garyth.jpg');
 export default function ProfileScreen() {
   const router = useRouter();
   const profile = useProfile();
+  const scores = useAbilityScores();
   const [name, setName] = useState(profile.name);
   const [ancestry, setAncestry] = useState(profile.ancestry);
   const [className, setClassName] = useState(profile.className);
   const [level, setLevel] = useState(String(profile.level));
   const [playedBy, setPlayedBy] = useState(profile.playedBy);
   const [avatarUri, setAvatarUri] = useState<string | null>(profile.avatarUri);
+  const [scoreDraft, setScoreDraft] = useState<Record<string, string>>(() =>
+    Object.fromEntries(abilityOrder.map(key => [key, String(scores[key])])),
+  );
 
   const canSave = name.trim().length >= 2;
 
@@ -51,6 +65,11 @@ export default function ProfileScreen() {
       return;
     }
     const parsed = Math.round(Number(level));
+    const nextScores = {} as AbilityScores;
+    for (const key of abilityOrder) {
+      nextScores[key] = clampScore(Number.parseInt(scoreDraft[key] ?? '', 10));
+    }
+    setAbilityScores(nextScores);
     updateProfile({
       name: name.trim(),
       ancestry: ancestry.trim() || profile.ancestry,
@@ -125,6 +144,33 @@ export default function ProfileScreen() {
             <Text style={styles.label}>Played by</Text>
             <TextInput value={playedBy} onChangeText={setPlayedBy} maxLength={30} accessibilityLabel="Played by" style={styles.input} />
           </View>
+        </View>
+
+        <Text style={styles.sectionLabel}>Ability scores</Text>
+        <View style={styles.abilities}>
+          {abilityOrder.map(key => {
+            const score = Number.parseInt(scoreDraft[key] ?? '', 10);
+            const mod = abilityModifier(Number.isFinite(score) ? score : 10);
+            return (
+              <View key={key} style={styles.ability}>
+                <Text style={styles.label}>{abilityLabels[key]}</Text>
+                <View style={styles.abilityRow}>
+                  <TextInput
+                    value={scoreDraft[key] ?? ''}
+                    onChangeText={text =>
+                      setScoreDraft(current => ({ ...current, [key]: text.replace(/[^0-9]/g, '').slice(0, 2) }))
+                    }
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    accessibilityLabel={`${abilityLabels[key]} score`}
+                    selectTextOnFocus
+                    style={[styles.input, styles.scoreInput]}
+                  />
+                  <Text style={styles.modifier}>{formatModifier(mod)}</Text>
+                </View>
+              </View>
+            );
+          })}
         </View>
 
         <Pressable
@@ -223,6 +269,46 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 10,
+  },
+  sectionLabel: {
+    marginTop: 12,
+    fontFamily: fonts.body,
+    fontSize: 11,
+    lineHeight: 15,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: colors.ink,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.borderSoft,
+    paddingTop: 12,
+  },
+  abilities: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  ability: {
+    width: '47%',
+    flexGrow: 1,
+  },
+  abilityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  scoreInput: {
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: fonts.numeral,
+    fontSize: 17,
+  },
+  modifier: {
+    width: 38,
+    fontFamily: fonts.numeral,
+    fontSize: 20,
+    lineHeight: 23,
+    color: colors.ink,
+    textAlign: 'center',
   },
   half: {
     flex: 1,

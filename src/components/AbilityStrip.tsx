@@ -1,6 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { character } from '../data/character';
+import {
+  abilityModifier,
+  abilityOrder,
+  formatModifier,
+  useAbilityScores,
+} from '../data/abilitiesStore';
 import { colors, fonts } from '../theme';
 
 type Props = {
@@ -9,6 +14,8 @@ type Props = {
 
 /** Six ability scores fixed below the banner, closing with an inked rule. */
 export function AbilityStrip({ onPress }: Props) {
+  const scores = useAbilityScores();
+
   return (
     <Pressable
       onPress={onPress}
@@ -17,11 +24,11 @@ export function AbilityStrip({ onPress }: Props) {
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
     >
       <View style={styles.row}>
-        {character.abilities.map(ability => (
-          <View key={ability.key} style={styles.item}>
-            <Text style={styles.label}>{ability.key}</Text>
-            <Text style={styles.mod}>{ability.mod}</Text>
-            <Text style={styles.score}>{ability.score}</Text>
+        {abilityOrder.map(key => (
+          <View key={key} style={styles.item}>
+            <Text style={styles.label}>{key}</Text>
+            <Text style={styles.mod}>{formatModifier(abilityModifier(scores[key]))}</Text>
+            <Text style={styles.score}>{scores[key]}</Text>
           </View>
         ))}
       </View>

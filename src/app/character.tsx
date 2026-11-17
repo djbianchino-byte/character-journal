@@ -3,12 +3,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { InfoRow, Kicker, PaperCard } from '../components/PaperCard';
 import { SheetScaffold } from '../components/SheetScaffold';
+import { passivePerception, useAbilityScores } from '../data/abilitiesStore';
 import { campaign } from '../data/campaign';
 import { character } from '../data/character';
 import { colors, fonts } from '../theme';
 
 export default function OverviewScreen() {
   const router = useRouter();
+  const scores = useAbilityScores();
 
   return (
     <SheetScaffold variant="home">
@@ -34,7 +36,7 @@ export default function OverviewScreen() {
 
       <PaperCard label="At a glance" style={styles.gap}>
         <InfoRow label="Proficiency" value={character.proficiencyBonus} />
-        <InfoRow label="Passive Perception" value={String(character.senses.passivePerception)} />
+        <InfoRow label="Passive Perception" value={String(passivePerception(scores))} />
         <InfoRow label="Darkvision" value={character.senses.darkvision} last />
       </PaperCard>
 

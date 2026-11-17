@@ -1,11 +1,22 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import {
+  formatModifier,
+  passivePerception,
+  proficiencyBonus,
+  savingThrowBonus,
+  skillBonus,
+  useAbilityScores,
+} from '../data/abilitiesStore';
 import { character } from '../data/character';
 import { colors, fonts } from '../theme';
 import { PaperCard } from './PaperCard';
 
 /** Saving throws, senses and skills. Shown in the drop-down opened from the ability strip. */
 export function AbilitiesPanel() {
+  const scores = useAbilityScores();
+  const passive = passivePerception(scores);
+
   return (
     <>
       <PaperCard label="Saving throw proficiencies">
@@ -16,7 +27,7 @@ export function AbilitiesPanel() {
               style={[styles.saveCell, index > 0 && styles.saveCellDivider]}
             >
               <Text style={styles.saveLabel}>{save.ability}</Text>
-              <Text style={styles.saveValue}>{save.value}</Text>
+              <Text style={styles.saveValue}>{formatModifier(savingThrowBonus(scores, save))}</Text>
             </View>
           ))}
         </View>
@@ -25,7 +36,7 @@ export function AbilitiesPanel() {
 
         <Text style={styles.blockLabel}>Senses</Text>
         <View style={styles.senseRow}>
-          <Text style={styles.senseValue}>{character.senses.passivePerception}</Text>
+          <Text style={styles.senseValue}>{passive}</Text>
           <Text style={styles.senseLabel}>Passive Perception</Text>
         </View>
         <Text style={styles.darkvision}>Darkvision {character.senses.darkvision}</Text>
@@ -34,10 +45,10 @@ export function AbilitiesPanel() {
       <PaperCard label="Skills" style={styles.skillsCard}>
         <View style={styles.bonusRow}>
           <Text style={styles.bonusLabel}>Proficiency Bonus</Text>
-          <Text style={styles.bonusValue}>{character.proficiencyBonus}</Text>
+          <Text style={styles.bonusValue}>{formatModifier(proficiencyBonus)}</Text>
           <View style={styles.bonusDivider} />
           <Text style={styles.bonusLabel}>Passive Perception</Text>
-          <Text style={styles.bonusValue}>{character.senses.passivePerception}</Text>
+          <Text style={styles.bonusValue}>{passive}</Text>
         </View>
 
         <View style={styles.columnRow}>
@@ -55,7 +66,7 @@ export function AbilitiesPanel() {
               {skill.name}
             </Text>
             <Text style={styles.ability}>{skill.ability}</Text>
-            <Text style={styles.skillBonus}>{skill.bonus}</Text>
+            <Text style={styles.skillBonus}>{formatModifier(skillBonus(scores, skill))}</Text>
           </View>
         ))}
 
