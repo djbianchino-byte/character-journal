@@ -1,30 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  Animated,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AbilitiesPanel } from '../components/AbilitiesPanel';
-import { ABILITY_HEIGHT, colors, fonts, HEADER_HEIGHT, radius, SHEET_WIDTH } from '../theme';
+import { DiceFab } from '../components/DiceFab';
+import { useSheetFrame } from '../components/useSheetFrame';
+import { colors, fonts, radius } from '../theme';
 
 export default function AbilitiesScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const frame = useSheetFrame();
   const [progress] = useState(() => new Animated.Value(0));
-
-  const framed = Platform.OS === 'web' && width >= 560;
-  const sheetHeight = framed ? Math.min(844, height - 48) : height;
-  const sheetTop = framed ? (height - sheetHeight) / 2 : 0;
-  const anchor = sheetTop + (framed ? 0 : insets.top) + HEADER_HEIGHT + ABILITY_HEIGHT;
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -45,7 +31,7 @@ export default function AbilitiesScreen() {
   return (
     <View style={styles.root} pointerEvents="box-none">
       <Pressable
-        style={[styles.scrim, { top: anchor }]}
+        style={[styles.scrim, { top: frame.anchor }]}
         onPress={close}
         accessibilityRole="button"
         accessibilityLabel="Close abilities and skills"
@@ -54,11 +40,8 @@ export default function AbilitiesScreen() {
       <Animated.View
         style={[
           styles.drop,
-          framed
-            ? { left: (width - SHEET_WIDTH) / 2, width: SHEET_WIDTH, paddingHorizontal: 0 }
-            : { left: 12, right: 12 },
+          { top: frame.anchor, left: frame.left, width: frame.width },
           {
-            top: anchor,
             opacity: progress,
             transform: [
               {
@@ -71,7 +54,7 @@ export default function AbilitiesScreen() {
           },
         ]}
       >
-        <View style={[styles.sheet, framed && styles.sheetFramed]}>
+        <View style={[styles.sheet, frame.framed && styles.sheetFramed]}>
           <View style={styles.head}>
             <View>
               <Text style={styles.kicker}>Ser Garyth</Text>
@@ -89,7 +72,7 @@ export default function AbilitiesScreen() {
           </View>
 
           <ScrollView
-            style={{ maxHeight: sheetHeight - anchor - 40 }}
+            style={{ maxHeight: frame.top + frame.height - frame.anchor - 40 }}
             contentContainerStyle={styles.body}
             showsVerticalScrollIndicator={false}
           >
@@ -97,6 +80,14 @@ export default function AbilitiesScreen() {
           </ScrollView>
         </View>
       </Animated.View>
+
+      {/* Drawn after the panel so the d20 stays on top of it. */}
+      <View
+        pointerEvents="box-none"
+        style={{ position: 'absolute', top: frame.top, left: frame.left, width: frame.width, height: frame.height }}
+      >
+        <DiceFab style={styles.dice} />
+      </View>
     </View>
   );
 }
@@ -173,5 +164,12 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingTop: 4,
+  },
+  dice: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    width: 72,
+    height: 72,
   },
 });

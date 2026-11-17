@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import {
   Image,
@@ -17,6 +17,7 @@ import { character } from '../data/character';
 import { journalSections, type JournalSection } from '../data/journal';
 import { colors, fonts, radius, SHEET_WIDTH } from '../theme';
 import { AbilityStrip } from './AbilityStrip';
+import { DiceFab } from './DiceFab';
 import { GoldHeader } from './GoldHeader';
 
 const paper = require('../../assets/ui/paper-texture.jpg');
@@ -27,7 +28,6 @@ const classIcon = require('../../assets/ui/rail-class.png');
 const acIcon = require('../../assets/ui/rail-ac.png');
 const initiativeIcon = require('../../assets/ui/rail-initiative.png');
 const heartIcon = require('../../assets/ui/rail-heart.png');
-const d20Icon = require('../../assets/ui/rail-d20.png');
 
 export type RailKey = 'journal' | 'inventory' | 'features';
 
@@ -47,6 +47,7 @@ type Props = {
 export function SheetScaffold({ children, variant = 'page', active, journalSection, onEdit }: Props) {
   const journalOpen = journalSection !== undefined;
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isHome = variant === 'home';
@@ -66,7 +67,9 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
         <ImageBackground source={paper} resizeMode="cover" style={styles.paper}>
           <SafeAreaView edges={['top']} style={styles.safe}>
             <GoldHeader onBack={goBack} onEdit={onEdit} />
-            <AbilityStrip onPress={() => router.push('/abilities' as never)} />
+            <AbilityStrip
+              onPress={() => (pathname === '/abilities' ? goBack() : router.push('/abilities' as never))}
+            />
 
             <View style={styles.body}>
               <ScrollView
@@ -167,14 +170,7 @@ export function SheetScaffold({ children, variant = 'page', active, journalSecti
                   </View>
                 ) : null}
 
-                <Pressable
-                  onPress={() => router.push('/dice' as never)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open dice and attacks"
-                  style={({ pressed }) => [styles.dice, pressed && styles.dicePressed]}
-                >
-                  <Image source={d20Icon} style={styles.diceIcon} resizeMode="contain" />
-                </Pressable>
+                <DiceFab style={styles.dice} />
               </View>
             </View>
           </SafeAreaView>
@@ -439,12 +435,5 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
   },
-  dicePressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.97 }],
-  },
-  diceIcon: {
-    width: 72,
-    height: 72,
-  },
+
 });

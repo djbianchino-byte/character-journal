@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { campaign } from '../data/campaign';
 import { attacks } from '../data/features';
 import { addEntity } from '../data/dmStore';
+import { useSheetFrame } from '../components/useSheetFrame';
 import { colors, fonts, radius } from '../theme';
 
 type RollResult = {
@@ -46,6 +47,8 @@ function attackExpression(damage: string) {
 
 export default function DiceScreen() {
   const router = useRouter();
+  const frame = useSheetFrame();
+  const cardWidth = Math.min(358, frame.width - 32);
   const [selected, setSelected] = useState('1d20');
   const [result, setResult] = useState<RollResult | null>(null);
   const [history, setHistory] = useState<string[]>([]);
@@ -66,7 +69,7 @@ export default function DiceScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} pointerEvents="box-none">
       <Pressable
         style={StyleSheet.absoluteFill}
         onPress={close}
@@ -74,7 +77,16 @@ export default function DiceScreen() {
         accessibilityLabel="Close dice"
       />
 
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          {
+            top: frame.anchor + 8,
+            left: frame.left + (frame.width - cardWidth) / 2,
+            width: cardWidth,
+          },
+        ]}
+      >
         <View style={styles.head}>
           <View>
             <Text style={styles.kicker}>AT THE TABLE</Text>
@@ -186,7 +198,13 @@ export default function DiceScreen() {
 
         {history.length > 0 ? (
           <Text style={styles.history} numberOfLines={2}>
-            Recent: {history.join(' · ')}
+            Recent:{' '}
+            {history.map((value, index) => (
+              <Text key={index} style={index === 0 ? styles.historyLatest : undefined}>
+                {index > 0 ? ' · ' : ''}
+                {value}
+              </Text>
+            ))}
           </Text>
         ) : null}
 
@@ -205,15 +223,15 @@ export default function DiceScreen() {
 
 const styles = StyleSheet.create({
   root: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     backgroundColor: colors.scrim,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
   },
   card: {
-    width: '100%',
-    maxWidth: 358,
+    position: 'absolute',
     backgroundColor: colors.parchmentLight,
     borderWidth: 1,
     borderColor: colors.border,
@@ -392,6 +410,10 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     color: colors.muted,
     textAlign: 'center',
+  },
+  historyLatest: {
+    fontWeight: '700',
+    color: colors.ink,
   },
   history: {
     marginTop: 8,
