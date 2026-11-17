@@ -10,6 +10,7 @@ export default function RootLayout() {
     'IM Fell English': require('../../assets/fonts/IMFellEnglish-Regular.ttf'),
     'IM Fell English Italic': require('../../assets/fonts/IMFellEnglish-Italic.ttf'),
     MedievalSharp: require('../../assets/fonts/MedievalSharp-Regular.ttf'),
+    'Kingthings Petrock': require('../../assets/fonts/KingthingsPetrock-Bold.ttf'),
   });
 
   if (!fontsLoaded && !fontError) {

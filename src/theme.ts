@@ -48,7 +48,7 @@ export const colors = {
 } as const;
 
 export const fonts = {
-  display: 'IM Fell English',
+  display: 'Kingthings Petrock',
   displayItalic: 'IM Fell English Italic',
   /** Lining numerals for scores, coins, hit points and dice labels. */
   numeral: 'MedievalSharp',
