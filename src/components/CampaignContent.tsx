@@ -1,14 +1,31 @@
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { campaign } from '../data/campaign';
-import { character } from '../data/character';
-import { entityKindLabels, useDm, type DmEntity } from '../data/dmStore';
+import {
+  addBackstoryBox,
+  removeBackstoryBox,
+  toggleRelationship,
+  updateBackstoryBox,
+  useBackstory,
+} from '../data/backstoryStore';
+import {
+  characterDirectory,
+  entityKindLabels,
+  isRevealed,
+  useDm,
+  type DmEntity,
+  type EntityKind,
+} from '../data/dmStore';
 import { updateLore, useLore } from '../data/loreStore';
 import { colors, fonts } from '../theme';
+import { AddButton } from './AddButton';
+import { BackstoryBox } from './BackstoryBox';
 import { EditableCard, type EditableField } from './EditableCard';
 import { LocationCard } from './LocationCard';
 import { PaperCard } from './PaperCard';
 import { PartyRow } from './PartyRow';
+import { PinToggle } from './PinToggle';
 
 const appearanceFields: EditableField[] = [
   { key: 'physicalDescription', label: 'Description', multiline: true },
@@ -26,16 +43,16 @@ const personalityFields: EditableField[] = [
   { key: 'flaws', label: 'Flaws', multiline: true },
 ];
 
-/** Entries the DM has pinned, so players can see them, of one kind. */
-function useRevealed(kind: DmEntity['kind']) {
-  const dm = useDm(campaign.id);
-  return dm.entities.filter(entity => entity.pinned && entity.kind === kind);
-}
-
 /** Everything the DM has pinned, whatever its kind. */
 function usePinned() {
   const dm = useDm(campaign.id);
   return dm.entities.filter(entity => entity.pinned);
+}
+
+/** Entries of one kind that players can see: pinned by the DM, or written by a player. */
+function useVisible(kind: EntityKind) {
+  const dm = useDm(campaign.id);
+  return dm.entities.filter(entity => entity.kind === kind && isRevealed(entity));
 }
 
 /** Events show their date; other kinds show their kind, plus any subtitle. */
@@ -61,9 +78,9 @@ function Paragraphs({ text }: { text: string }) {
   );
 }
 
-/** One pinned event as players read it. */
-function RevealedEvent({ entry, style }: { entry: DmEntity; style?: object }) {
-  return (
+/** One revealed entry as players read it. Tapping it opens the entry. */
+function RevealedEvent({ entry, style, onOpen }: { entry: DmEntity; style?: object; onOpen?: () => void }) {
+  const card = (
     <PaperCard label={revealedLabel(entry)} title={entry.title} style={style}>
       <Paragraphs text={entry.body} />
       {entry.facts.length > 0 ? (
@@ -74,11 +91,19 @@ function RevealedEvent({ entry, style }: { entry: DmEntity; style?: object }) {
       ) : null}
     </PaperCard>
   );
+  if (!onOpen) {
+    return card;
+  }
+  return (
+    <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`Open ${entry.title}`}>
+      {card}
+    </Pressable>
+  );
 }
 
 /** The campaign page: the next session, then everything the DM has pinned. */
 export function StorySection() {
-  const events = usePinned();
+  const pinned = usePinned();
 
   return (
     <View>
@@ -97,39 +122,47 @@ export function StorySection() {
         </View>
       </PaperCard>
 
-      {events.map(entry => (
+      {pinned.map(entry => (
         <RevealedEvent key={entry.id} entry={entry} style={styles.gap} />
       ))}
 
-      {events.length === 0 ? (
+      {pinned.length === 0 ? (
         <Text style={[styles.tabBlurb, styles.gap]}>The story has not been shared yet.</Text>
       ) : null}
     </View>
   );
 }
 
-/** Every event the DM has revealed. */
-export function EventsSection() {
-  const events = useRevealed('event');
+type OpenEntry = (entry: DmEntity) => void;
+
+/** Events the DM has revealed, plus any the player wrote. */
+export function EventsSection({ onOpen }: { onOpen: OpenEntry }) {
+  const router = useRouter();
+  const events = useVisible('event');
 
   return (
     <View>
       <Text style={styles.tabBlurb}>Everything that has moved the story forward.</Text>
       {events.length === 0 ? <Text style={styles.tabBlurb}>No events have been revealed yet.</Text> : null}
       {events.map((event, index) => (
-        <RevealedEvent key={event.id} entry={event} style={index > 0 ? styles.gap : undefined} />
+        <RevealedEvent
+          key={event.id}
+          entry={event}
+          style={index > 0 ? styles.gap : undefined}
+          onOpen={() => onOpen(event)}
+        />
       ))}
+      <View style={styles.gap}>
+        <AddButton label="+ Add event" onPress={() => router.push('/journal/new?kind=event' as never)} />
+      </View>
     </View>
   );
 }
 
-type PlacesProps = {
-  onOpen: (location: DmEntity) => void;
-};
-
-/** Places the DM has revealed. */
-export function PlacesSection({ onOpen }: PlacesProps) {
-  const places = useRevealed('location');
+/** Places the DM has revealed, plus any the player wrote. */
+export function PlacesSection({ onOpen }: { onOpen: OpenEntry }) {
+  const router = useRouter();
+  const places = useVisible('location');
 
   return (
     <View>
@@ -146,6 +179,7 @@ export function PlacesSection({ onOpen }: PlacesProps) {
           onPress={() => onOpen(place)}
         />
       ))}
+      <AddButton label="+ Add place" onPress={() => router.push('/journal/new?kind=location' as never)} />
     </View>
   );
 }
@@ -156,10 +190,8 @@ type CharactersProps = {
   onOpen: (player: PartyMember) => void;
 };
 
-/** The party, and the characters the DM has revealed. */
+/** The party roster. */
 export function CharactersSection({ onOpen }: CharactersProps) {
-  const characters = useRevealed('character');
-
   return (
     <PaperCard label="The party">
       {campaign.roster.map(player => (
@@ -173,25 +205,60 @@ export function CharactersSection({ onOpen }: CharactersProps) {
           onPress={() => onOpen(player)}
         />
       ))}
-
-      {characters.length > 0 ? <Text style={styles.npcLabel}>Faces in the vale</Text> : null}
-      {characters.map(npc => (
-        <PartyRow
-          key={npc.id}
-          name={npc.title}
-          initial={npc.initial}
-          meta={npc.subtitle}
-          tint={npc.tint}
-          onPress={() => Alert.alert(npc.title, npc.subtitle)}
-        />
-      ))}
     </PaperCard>
   );
 }
 
-/** Ser Garyth's backstory. Each card can be edited in place. */
+/** Characters the DM has allowed players to see, and characters players have written. */
+export function CharacterListSection({ onOpen }: { onOpen: OpenEntry }) {
+  const router = useRouter();
+  const dm = useDm(campaign.id);
+  const { relationshipIds } = useBackstory();
+  const characters = dm.entities.filter(entity => entity.kind === 'character' && isRevealed(entity));
+
+  return (
+    <View>
+      <Text style={styles.tabBlurb}>Characters the DM has shared, and the ones you have written.</Text>
+      {characters.length === 0 ? <Text style={styles.tabBlurb}>No characters have been shared yet.</Text> : null}
+      {characters.map(entity => (
+        <View key={entity.id} style={styles.characterRow}>
+          <Pressable
+            onPress={() => onOpen(entity)}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${entity.title}`}
+            style={styles.characterOpen}
+          >
+            <View style={[styles.medallion, { backgroundColor: entity.tint }]}>
+              <Text style={styles.initial}>{entity.initial}</Text>
+            </View>
+            <View style={styles.characterBody}>
+              <Text style={styles.characterName}>{entity.title}</Text>
+              <Text style={styles.characterMeta} numberOfLines={1}>
+                {entity.author === 'player' ? 'Written by you' : entity.subtitle}
+              </Text>
+            </View>
+          </Pressable>
+          <PinToggle
+            pinned={relationshipIds.includes(entity.id)}
+            onToggle={() => toggleRelationship(entity.id)}
+            title={entity.title}
+          />
+        </View>
+      ))}
+      <View style={styles.gap}>
+        <AddButton label="+ Add character" onPress={() => router.push('/journal/new?kind=character' as never)} />
+      </View>
+    </View>
+  );
+}
+
+/** Ser Garyth's backstory: the built-in cards, the player's own text boxes, and relationships. */
 export function BackstorySection() {
   const lore = useLore();
+  const { boxes, relationshipIds } = useBackstory();
+  const dm = useDm(campaign.id);
+  const directory = characterDirectory(dm.entities);
+  const relationships = directory.filter(entry => relationshipIds.includes(entry.id));
 
   return (
     <View>
@@ -218,16 +285,38 @@ export function BackstorySection() {
         style={styles.gap}
       />
 
+      {boxes.map(box => (
+        <BackstoryBox
+          key={box.id}
+          box={box}
+          startEditing={box.body === '' && box.title === 'New section'}
+          onSave={patch => updateBackstoryBox(box.id, patch)}
+          onRemove={() => removeBackstoryBox(box.id)}
+          style={styles.gap}
+        />
+      ))}
+
+      <View style={styles.gap}>
+        <AddButton label="+ Add text box" onPress={() => addBackstoryBox()} />
+      </View>
+
       <PaperCard label="Relationships" style={styles.gap}>
-        {character.lore.relationships.map(person => (
-          <PartyRow
-            key={person.name}
-            name={person.name}
-            initial={person.initial}
-            meta={person.role}
-            tint="#6f512b"
-            onPress={() => Alert.alert(person.name, person.role)}
-          />
+        {relationships.length === 0 ? (
+          <Text style={styles.tabBlurb}>No relationships pinned. Pin characters from the Characters tab.</Text>
+        ) : null}
+        {relationships.map(person => (
+          <View key={person.id} style={styles.relationRow}>
+            <View style={[styles.medallion, { backgroundColor: person.tint }]}>
+              <Text style={styles.initial}>{person.initial}</Text>
+            </View>
+            <View style={styles.characterBody}>
+              <Text style={styles.characterName}>{person.name}</Text>
+              <Text style={styles.characterMeta} numberOfLines={1}>
+                {person.subtitle}
+              </Text>
+            </View>
+            <PinToggle pinned title={person.name} onToggle={() => toggleRelationship(person.id)} />
+          </View>
         ))}
       </PaperCard>
     </View>
@@ -237,16 +326,6 @@ export function BackstorySection() {
 const styles = StyleSheet.create({
   gap: {
     marginTop: 11,
-  },
-  npcLabel: {
-    marginTop: 14,
-    marginBottom: 2,
-    fontFamily: fonts.body,
-    fontSize: 10,
-    lineHeight: 13,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    color: colors.muted,
   },
   tabBlurb: {
     fontFamily: fonts.displayItalic,
@@ -333,5 +412,57 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.ink,
     marginTop: 2,
+  },
+  characterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSoft,
+  },
+  characterOpen: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+  },
+  relationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSoft,
+  },
+  medallion: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initial: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    lineHeight: 20,
+    color: colors.cream,
+  },
+  characterBody: {
+    flex: 1,
+  },
+  characterName: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    lineHeight: 20,
+    color: colors.ink,
+  },
+  characterMeta: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.muted,
   },
 });

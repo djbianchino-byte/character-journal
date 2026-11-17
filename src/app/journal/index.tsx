@@ -3,12 +3,14 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import {
   BackstorySection,
+  CharacterListSection,
   CharactersSection,
   EventsSection,
   PlacesSection,
   StorySection,
   type PartyMember,
 } from '../../components/CampaignContent';
+import type { DmEntity } from '../../data/dmStore';
 import { Kicker, InfoRow, PaperCard } from '../../components/PaperCard';
 import { SheetScaffold } from '../../components/SheetScaffold';
 import { campaign } from '../../data/campaign';
@@ -27,6 +29,10 @@ export default function JournalScreen() {
   const { section } = useLocalSearchParams<{ section?: string }>();
   const current = resolveSection(section);
   const profile = useProfile();
+
+  function openEntry(entry: DmEntity) {
+    router.push(`/journal/entry/${entry.id}` as never);
+  }
 
   function openCharacter(player: PartyMember) {
     if (player.isYou) {
@@ -59,12 +65,9 @@ export default function JournalScreen() {
 
       {current === 'lore' ? <BackstorySection /> : null}
       {current === 'campaign' ? <StorySection /> : null}
-      {current === 'places' ? (
-        <PlacesSection
-          onOpen={location => router.push(`/journal/location/${location.id}` as never)}
-        />
-      ) : null}
-      {current === 'events' ? <EventsSection /> : null}
+      {current === 'characters' ? <CharacterListSection onOpen={openEntry} /> : null}
+      {current === 'places' ? <PlacesSection onOpen={openEntry} /> : null}
+      {current === 'events' ? <EventsSection onOpen={openEntry} /> : null}
     </SheetScaffold>
   );
 }

@@ -1,19 +1,34 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { AddButton } from '../components/AddButton';
+import { ItemEditor } from '../components/ItemEditor';
 import { Kicker, PaperCard } from '../components/PaperCard';
 import { SheetScaffold } from '../components/SheetScaffold';
-import { character, type InventoryItem } from '../data/character';
-import { colors, fonts } from '../theme';
+import {
+  addItem,
+  removeItem,
+  setCoins,
+  updateItem,
+  useInventory,
+  type Coins,
+  type InventoryEntry,
+  type ItemType,
+} from '../data/inventoryStore';
+import { colors, fonts, radius } from '../theme';
 
-const groups: { label: string; types: InventoryItem['type'][] }[] = [
+const quillIcon = require('../../assets/ui/icon-quill.png');
+
+const groups: { label: string; types: ItemType[] }[] = [
   { label: 'Consumables', types: ['Consumable'] },
   { label: 'Gear & treasure', types: ['Gear', 'Treasure'] },
 ];
 
 export default function InventoryScreen() {
-  const equipped = character.inventory.filter(
-    item => item.type === 'Weapon' || item.type === 'Armor',
-  );
+  const { items, coins } = useInventory();
+  const [adding, setAdding] = useState(false);
+
+  const equipped = items.filter(item => item.type === 'Weapon' || item.type === 'Armor');
 
   return (
     <SheetScaffold active="inventory">
@@ -23,26 +38,25 @@ export default function InventoryScreen() {
         <Text style={styles.subtitle}>Weapons, supplies, and the small things worth keeping.</Text>
       </View>
 
-      <View style={styles.coinRow}>
-        <Coin label="Gold" value={character.coins.gold} />
-        <Coin label="Silver" value={character.coins.silver} />
-        <Coin label="Copper" value={character.coins.copper} />
-      </View>
+      <CoinPurse coins={coins} />
 
       <PaperCard label="Equipped" style={styles.gap}>
-        {equipped.map(item => (
-          <ItemRow key={item.name} item={item} />
-        ))}
+        {equipped.length === 0 ? (
+          <Text style={styles.empty}>No weapons or armor carried.</Text>
+        ) : (
+          equipped.map(item => <ItemRow key={item.id} item={item} />)
+        )}
       </PaperCard>
 
       {groups.map(group => {
-        const items = character.inventory.filter(item => group.types.includes(item.type));
-        if (items.length === 0) return null;
+        const list = items.filter(item => group.types.includes(item.type));
         return (
           <PaperCard key={group.label} label={group.label} style={styles.gap}>
-            {items.map(item => (
-              <ItemRow key={item.name} item={item} />
-            ))}
+            {list.length === 0 ? (
+              <Text style={styles.empty}>Nothing here yet.</Text>
+            ) : (
+              list.map(item => <ItemRow key={item.id} item={item} />)
+            )}
           </PaperCard>
         );
       })}
@@ -60,22 +74,136 @@ export default function InventoryScreen() {
         </View>
         <Text style={styles.attuneNote}>1 of 3 attunement slots filled.</Text>
       </PaperCard>
+
+      {adding ? (
+        <PaperCard label="New item" style={styles.gap}>
+          <ItemEditor
+            initial={{ name: '', type: 'Gear', qty: 1, description: '' }}
+            saveLabel="Add item"
+            onSave={draft => {
+              addItem(draft);
+              setAdding(false);
+            }}
+            onCancel={() => setAdding(false)}
+          />
+        </PaperCard>
+      ) : (
+        <View style={styles.gap}>
+          <AddButton label="+ Add item" onPress={() => setAdding(true)} />
+        </View>
+      )}
     </SheetScaffold>
   );
 }
 
-function Coin({ label, value }: { label: string; value: number }) {
+/** Gold, silver and copper, editable in place. */
+function CoinPurse({ coins }: { coins: Coins }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ gold: '', silver: '', copper: '' });
+
+  function startEditing() {
+    setDraft({ gold: String(coins.gold), silver: String(coins.silver), copper: String(coins.copper) });
+    setEditing(true);
+  }
+
+  function save() {
+    setCoins({
+      gold: Number.parseInt(draft.gold, 10) || 0,
+      silver: Number.parseInt(draft.silver, 10) || 0,
+      copper: Number.parseInt(draft.copper, 10) || 0,
+    });
+    setEditing(false);
+  }
+
+  const denominations = [
+    { key: 'gold', label: 'Gold', value: coins.gold },
+    { key: 'silver', label: 'Silver', value: coins.silver },
+    { key: 'copper', label: 'Copper', value: coins.copper },
+  ] as const;
+
   return (
-    <View style={styles.coin}>
-      <Text style={styles.coinLabel}>{label}</Text>
-      <Text style={styles.coinValue}>{value}</Text>
-    </View>
+    <PaperCard
+      label="Coin purse"
+      onAction={editing ? () => setEditing(false) : startEditing}
+      actionLabel={editing ? 'Cancel editing coins' : 'Edit coins'}
+    >
+      <View style={styles.coinRow}>
+        {denominations.map(denomination =>
+          editing ? (
+            <View key={denomination.key} style={styles.coin}>
+              <Text style={styles.coinLabel}>{denomination.label}</Text>
+              <TextInput
+                value={draft[denomination.key]}
+                onChangeText={text =>
+                  setDraft(current => ({ ...current, [denomination.key]: text.replace(/[^0-9]/g, '') }))
+                }
+                keyboardType="number-pad"
+                maxLength={6}
+                accessibilityLabel={`${denomination.label} pieces`}
+                selectTextOnFocus
+                style={styles.coinInput}
+              />
+            </View>
+          ) : (
+            <View key={denomination.key} style={styles.coin}>
+              <Text style={styles.coinLabel}>{denomination.label}</Text>
+              <Text style={styles.coinValue}>{denomination.value}</Text>
+            </View>
+          ),
+        )}
+      </View>
+
+      {editing ? (
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => setEditing(false)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}
+          >
+            <Text style={styles.cancelText}>Cancel</Text>
+          </Pressable>
+          <Pressable
+            onPress={save}
+            accessibilityRole="button"
+            accessibilityLabel="Save coins"
+            style={({ pressed }) => [styles.save, pressed && styles.pressed]}
+          >
+            <Text style={styles.saveText}>Save</Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </PaperCard>
   );
 }
 
-function ItemRow({ item }: { item: InventoryItem }) {
+/** One item; tapping it opens the editor in place. */
+function ItemRow({ item }: { item: InventoryEntry }) {
+  const [editing, setEditing] = useState(false);
+
+  if (editing) {
+    return (
+      <View style={styles.editRow}>
+        <ItemEditor
+          initial={{ name: item.name, type: item.type, qty: item.qty, description: item.description }}
+          saveLabel="Save item"
+          onSave={draft => {
+            updateItem(item.id, draft);
+            setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
+          onRemove={() => removeItem(item.id)}
+        />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.itemRow}>
+    <Pressable
+      onPress={() => setEditing(true)}
+      accessibilityRole="button"
+      accessibilityLabel={`Edit ${item.name}`}
+      style={({ pressed }) => [styles.itemRow, pressed && styles.pressed]}
+    >
       <View style={styles.itemBody}>
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemDescription}>
@@ -83,8 +211,9 @@ function ItemRow({ item }: { item: InventoryItem }) {
           {item.description ? ` · ${item.description}` : ''}
         </Text>
       </View>
-      <Text style={styles.itemQty}>{item.qty}</Text>
-    </View>
+      <Image source={quillIcon} style={styles.quill} resizeMode="contain" />
+      <Text style={styles.itemQty}>{`x${item.qty}`}</Text>
+    </Pressable>
   );
 }
 
@@ -133,14 +262,63 @@ const styles = StyleSheet.create({
     lineHeight: 25,
     color: colors.ink,
   },
+  coinInput: {
+    width: '100%',
+    marginTop: 1,
+    paddingVertical: 0,
+    fontFamily: fonts.numeral,
+    fontSize: 21,
+    lineHeight: 25,
+    color: colors.ink,
+    textAlign: 'center',
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: 10,
+  },
+  cancel: {
+    paddingVertical: 6,
+  },
+  cancelText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.muted,
+  },
+  save: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.card,
+    backgroundColor: colors.green,
+  },
+  saveText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.goldLight,
+  },
   gap: {
     marginTop: 11,
+  },
+  empty: {
+    fontFamily: fonts.displayItalic,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.muted,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 8,
     paddingVertical: 7,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSoft,
+  },
+  editRow: {
+    paddingVertical: 9,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderSoft,
   },
@@ -165,6 +343,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     color: colors.ink,
+  },
+  quill: {
+    width: 14,
+    height: 11,
+    marginTop: 4,
+    opacity: 0.75,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   attuneRow: {
     flexDirection: 'row',

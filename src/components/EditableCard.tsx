@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   inputMultiline: {
-    minHeight: 92,
+    minHeight: 170,
   },
   block: {
     marginTop: 9,
