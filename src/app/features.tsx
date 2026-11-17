@@ -1,11 +1,23 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { AddButton } from '../components/AddButton';
+import { ClassFeatureCard } from '../components/ClassFeatureCard';
 import { Kicker, PaperCard } from '../components/PaperCard';
 import { SheetScaffold } from '../components/SheetScaffold';
-import { attacks, classFeatures, spells } from '../data/features';
+import { attacks, spells } from '../data/features';
+import {
+  addFeature,
+  removeFeature,
+  updateFeature,
+  useClassFeatures,
+} from '../data/featuresStore';
 import { colors, fonts } from '../theme';
 
 export default function FeaturesScreen() {
+  const features = useClassFeatures();
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   return (
     <SheetScaffold active="features">
       <View style={styles.intro}>
@@ -59,17 +71,20 @@ export default function FeaturesScreen() {
         ))}
       </PaperCard>
 
-      {classFeatures.map(feature => (
-        <PaperCard key={feature.id} title={feature.name} label={feature.subtitle} style={styles.gap}>
-          <Text style={styles.body}>{feature.description}</Text>
-          {feature.charges ? (
-            <View style={styles.chargeRow}>
-              <Text style={styles.chargeGlyph}>◆</Text>
-              <Text style={styles.chargeText}>{feature.charges} uses</Text>
-            </View>
-          ) : null}
-        </PaperCard>
+      {features.map(feature => (
+        <ClassFeatureCard
+          key={feature.id}
+          feature={feature}
+          startEditing={feature.id === editingId}
+          onSave={draft => updateFeature(feature.id, draft)}
+          onRemove={() => removeFeature(feature.id)}
+          style={styles.gap}
+        />
       ))}
+
+      <View style={styles.gap}>
+        <AddButton label="+ Add feature" onPress={() => setEditingId(addFeature())} />
+      </View>
     </SheetScaffold>
   );
 }
@@ -194,29 +209,5 @@ const styles = StyleSheet.create({
     color: colors.ink,
     textAlign: 'right',
     maxWidth: 100,
-  },
-  body: {
-    fontFamily: fonts.body,
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: colors.ink,
-  },
-  chargeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-  },
-  chargeGlyph: {
-    fontSize: 7,
-    color: colors.goldDark,
-  },
-  chargeText: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    lineHeight: 13,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: colors.muted,
   },
 });
