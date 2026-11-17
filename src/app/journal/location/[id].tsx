@@ -48,7 +48,7 @@ export default function LocationScreen() {
       </PaperCard>
 
       {place.facts.length > 0 ? (
-        <PaperCard label="What we know" style={styles.gap}>
+        <PaperCard label="Additional notes" style={styles.gap}>
           {place.facts.map((fact, index) => (
             <View
               key={fact}

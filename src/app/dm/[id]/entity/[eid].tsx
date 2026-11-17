@@ -137,14 +137,14 @@ function EntityDetail({ campaignId, entity, onTogglePin, onBack }: DetailProps) 
               style={[styles.input, styles.multiline]}
             />
 
-            <Text style={styles.label}>What we know · one per line</Text>
+            <Text style={styles.label}>Additional notes · one per line</Text>
             <TextInput
               value={facts}
               onChangeText={setFacts}
               multiline
               maxLength={1200}
               textAlignVertical="top"
-              accessibilityLabel="What we know"
+              accessibilityLabel="Additional notes"
               style={[styles.input, styles.multiline]}
             />
 
@@ -180,7 +180,7 @@ function EntityDetail({ campaignId, entity, onTogglePin, onBack }: DetailProps) 
       </PaperCard>
 
       {!editing && entity.facts.length > 0 ? (
-        <PaperCard label="What we know" style={styles.gap}>
+        <PaperCard label="Additional notes" style={styles.gap}>
           {entity.facts.map((fact, index) => (
             <View key={fact} style={[styles.factRow, index === entity.facts.length - 1 && styles.factRowLast]}>
               <Text style={styles.bullet}>◆</Text>
