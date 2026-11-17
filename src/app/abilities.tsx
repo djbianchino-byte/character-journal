@@ -31,11 +31,12 @@ export default function AbilitiesScreen() {
   return (
     <View style={styles.root} pointerEvents="box-none">
       <Pressable
-        style={[styles.scrim, { top: frame.anchor }]}
+        style={StyleSheet.absoluteFill}
         onPress={close}
         accessibilityRole="button"
         accessibilityLabel="Close abilities and skills"
       />
+      <View pointerEvents="none" style={[styles.scrim, { top: frame.anchor }]} />
 
       <Animated.View
         style={[
@@ -56,10 +57,7 @@ export default function AbilitiesScreen() {
       >
         <View style={[styles.sheet, frame.framed && styles.sheetFramed]}>
           <View style={styles.head}>
-            <View>
-              <Text style={styles.kicker}>Ser Garyth</Text>
-              <Text style={styles.title}>Abilities &amp; skills</Text>
-            </View>
+            <Text style={styles.title}>Abilities &amp; skills</Text>
             <Pressable
               onPress={close}
               hitSlop={12}
@@ -135,14 +133,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 6,
-  },
-  kicker: {
-    fontFamily: fonts.body,
-    fontSize: 9,
-    lineHeight: 12,
-    letterSpacing: 1.8,
-    textTransform: 'uppercase',
-    color: colors.muted,
   },
   title: {
     fontFamily: fonts.display,
