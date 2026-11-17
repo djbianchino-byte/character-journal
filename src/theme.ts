@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 /**
  * Design tokens taken from the "Finalized screens" page in the Figma file.
  *
@@ -11,9 +9,8 @@ import { Platform } from 'react-native';
  *   muted             #796344
  *   roll green        #30432A
  *
- * The display face is IM Fell English (bundled in assets/fonts), a free
- * old-style serif that stands in for Kingthings Petrock. Body copy uses the
- * platform UI sans, standing in for Lingo.
+ * The display face is Kingthings Petrock and body copy is Lingo, both bundled
+ * in assets/fonts. IM Fell English remains for italics, and MedievalSharp for numerals.
  */
 export const colors = {
   ink: '#3d2000',
@@ -52,18 +49,9 @@ export const fonts = {
   displayItalic: 'IM Fell English Italic',
   /** Lining numerals for scores, coins, hit points and dice labels. */
   numeral: 'MedievalSharp',
-  body: Platform.select({
-    ios: 'Avenir Next',
-    android: 'sans-serif',
-    web: 'system-ui',
-    default: 'sans-serif',
-  }),
-  data: Platform.select({
-    ios: 'Avenir Next',
-    android: 'sans-serif',
-    web: 'system-ui',
-    default: 'sans-serif',
-  }),
+  /** Body copy and small labels. */
+  body: 'Lingo',
+  data: 'Lingo',
 } as const;
 
 export const spacing = {
