@@ -148,29 +148,33 @@ export default function ProfileScreen() {
 
         <Text style={styles.sectionLabel}>Ability scores</Text>
         <View style={styles.abilities}>
-          {abilityOrder.map(key => {
-            const score = Number.parseInt(scoreDraft[key] ?? '', 10);
-            const mod = abilityModifier(Number.isFinite(score) ? score : 10);
-            return (
-              <View key={key} style={styles.ability}>
-                <Text style={styles.label}>{abilityLabels[key]}</Text>
-                <View style={styles.abilityRow}>
-                  <TextInput
-                    value={scoreDraft[key] ?? ''}
-                    onChangeText={text =>
-                      setScoreDraft(current => ({ ...current, [key]: text.replace(/[^0-9]/g, '').slice(0, 2) }))
-                    }
-                    keyboardType="number-pad"
-                    maxLength={2}
-                    accessibilityLabel={`${abilityLabels[key]} score`}
-                    selectTextOnFocus
-                    style={[styles.input, styles.scoreInput]}
-                  />
-                  <Text style={styles.modifier}>{formatModifier(mod)}</Text>
-                </View>
-              </View>
-            );
-          })}
+          {[0, 2, 4].map(start => (
+            <View key={start} style={styles.abilityPair}>
+              {abilityOrder.slice(start, start + 2).map(key => {
+                const score = Number.parseInt(scoreDraft[key] ?? '', 10);
+                const mod = abilityModifier(Number.isFinite(score) ? score : 10);
+                return (
+                  <View key={key} style={styles.ability}>
+                    <Text style={styles.label}>{abilityLabels[key]}</Text>
+                    <View style={styles.abilityRow}>
+                      <TextInput
+                        value={scoreDraft[key] ?? ''}
+                        onChangeText={text =>
+                          setScoreDraft(current => ({ ...current, [key]: text.replace(/[^0-9]/g, '').slice(0, 2) }))
+                        }
+                        keyboardType="number-pad"
+                        maxLength={2}
+                        accessibilityLabel={`${abilityLabels[key]} score`}
+                        selectTextOnFocus
+                        style={[styles.input, styles.scoreInput]}
+                      />
+                      <Text style={styles.modifier}>{formatModifier(mod)}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          ))}
         </View>
 
         <Pressable
@@ -283,13 +287,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   abilities: {
+    gap: 10,
+  },
+  abilityPair: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 10,
   },
   ability: {
-    width: '47%',
-    flexGrow: 1,
+    flex: 1,
+    minWidth: 0,
   },
   abilityRow: {
     flexDirection: 'row',
@@ -298,6 +304,7 @@ const styles = StyleSheet.create({
   },
   scoreInput: {
     flex: 1,
+    minWidth: 0,
     textAlign: 'center',
     fontFamily: fonts.numeral,
     fontSize: 17,
